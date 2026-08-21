@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debt CRM - Live</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+</head>
+<body class="bg-gray-900 text-white min-h-screen">
+    <div id="app" class="p-6">
+        <!-- LOGIN VIEW -->
+        <div v-if="!user" class="max-w-md mx-auto mt-20 bg-gray-800 p-8 rounded-xl shadow-2xl border border-gray-700">
+            <h1 class="text-3xl font-black text-blue-500 mb-6 text-center tracking-tighter">COLLECT PRO</h1>
+            <input v-model="email" type="email" placeholder="Your Email" class="w-full p-3 mb-4 bg-gray-700 border border-gray-600 rounded-lg outline-none focus:ring-2 focus:ring-blue-500">
+            <button @click="login" class="w-full bg-blue-600 hover:bg-blue-500 p-3 rounded-lg font-bold transition">Send Login Link</button>
+        </div>
+
+        <!-- DASHBOARD VIEW -->
+        <div v-else class="max-w-5xl mx-auto">
+            <div class="flex justify-between items-center mb-10">
+                <h1 class="text-3xl font-black text-blue-400">DASHBOARD</h1>
+                <div class="flex gap-4">
+                    <button @click="showAdd = true" class="bg-blue-600 px-6 py-2 rounded-full font-bold">+ New Debtor</button>
+                    <button @click="logout" class="text-gray-500 hover:text-red-500">Logout</button>
+                </div>
+            </div>
+
+            <!-- TABLE -->
+            <div class="bg-gray-800 rounded-2xl border border-gray-700 overflow-hidden shadow-xl">
+                <table class="w-full text-left">
+                    <thead class="bg-gray-900/50 text-gray-500 text-xs uppercase">
+                        <tr>
+                            <th class="p-4">Debtor</th>
+                            <th class="p-4">Balance</th>
+                            <th class="p-4">Arrangement</th>
+                            <th class="p-4 text-right">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-700">
+                        <tr v-for="d in debtors" :key="d.id" class="hover:bg-gray-700/30 transition">
+                            <td class="p-4 font-bold">{{ d.name }}<br><span class="text-xs font-normal text-gray-500">{{ d.email }}</span></td>
+                            <td class="p-4 font-mono text-blue-400 font-bold">${{ d.total_debt }}</td>
+                            <td class="p-4 text-sm text-gray-400">
+                                <span v-if="d.arrangements?.[0]" :class="isOverdue(d.arrangements[0].due_date) ? 'text-red-500 font-bold' : ''">
+                                    {{ d.arrangements[0].due_date }}
+                                </span>
+                                <span v-else class="italic text-gray-600">None set</span>
+                            </td>
+                            <td class="p-4 text-right">
+                                <span v-if="d.arrangements?.[0] && isOverdue(d.arrangements[0].due_date)" class="bg-red-500/20 text-red-500 px-2 py-1 rounded text-[10px] font-black border border-red-500/30">OVERDUE</span>
+                                <span v-else class="bg-green-500/20 text-green-500 px-2 py-1 rounded text-[10px] font-black border border-green-500/30">CURRENT</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ADD MODAL -->
+        <div v-if="showAdd" class="fixed inset-0 bg-black/80 flex items-center justify-center p-4">
+            <div class="bg-gray-800 p-8 rounded-xl w-full max-w-md border border-gray-700">
+                <h2 class="text-xl font-bold mb-4">Add New Account</h2>
+                <input v-model="form.name" placeholder="Name" class="w-full p-2 mb-2 bg-gray-700 border border-gray-600 rounded">
+                <input v-model="form.email" placeholder="Email" class="w-full p-2 mb-2 bg-gray-700 border border-gray-600 rounded">
+                <input v-model="form.debt" placeholder="Amount ($)" type="number" class="w-full p-2 mb-4 bg-gray-700 border border-gray-600 rounded">
+                <div class="flex gap-2">
+                    <button @click="save" class="flex-1 bg-blue-600 p-2 rounded font-bold">Save</button>
+                    <button @click="showAdd = false" class="flex-1 bg-gray-700 p-2 rounded font-bold">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // !!! REPLACE THE TWO LINES BELOW WITH YOUR KEYS FROM SUPABASE SETTINGS > API !!!
+        const S_URL = 'https://idxtnkisgqucufafjidv.supabase.co/rest/v1/';
+        const S_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkeHRua2lzZ3F1Y3VmYWZqaWR2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODczMjI2MTEsImV4cCI6MjEwMjg5ODYxMX0.Oi0_qsMfQUbE3V5uoi1VOSjPwks41xy65tG77v_ICyc';
+
+        const client = supabase.createClient(S_URL, S_KEY);
+        const { createApp } = Vue;
+
+        createApp({
+            data() {
+                return { 
+                    user: null, email: '', debtors: [], showAdd: false,
+                    form: { name: '', email: '', debt: '' }
+                }
+            },
+            async mounted() {
+                const { data } = await client.auth.getSession();
+                this.user = data.session?.user;
+                if (this.user) this.load();
+            },
+            methods: {
+                async login() {
+                    await client.auth.signInWithOtp({ email: this.email });
+                    alert("Magic Link sent! Check your email.");
+                },
+                async logout() {
+                    await client.auth.signOut();
+                    window.location.reload();
+                },
+                async load() {
+                    const { data } = await client.from('debtors').select('*, arrangements(*)');
+                    this.debtors = data || [];
+                },
+                async save() {
+                    await client.from('debtors').insert([{ 
+                        name: this.form.name, email: this.form.email, total_debt: this.form.debt 
+                    }]);
+                    this.showAdd = false;
+                    this.load();
+                },
+                isOverdue(date) {
+                    return new Date(date) < new Date().setHours(0,0,0,0);
+                }
+            }
+        }).mount('#app')
+    </script>
+</body>
+</html>
