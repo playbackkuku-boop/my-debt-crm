@@ -3,75 +3,200 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Debt CRM - Live</title>
+    <title>Mafanyolle Recoveries | Enterprise Collection Suite</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=JetBrains+Mono&display=swap');
+        body { font-family: 'Outfit', sans-serif; background-color: #0f172a; color: #f1f5f9; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.05); }
+        .sidebar-item-active { background: linear-gradient(90deg, rgba(37, 99, 235, 0.2) 0%, rgba(37, 99, 235, 0) 100%); border-left: 4px solid #2563eb; color: #fff; }
+        [v-cloak] { display: none; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+    </style>
 </head>
-<body class="bg-gray-900 text-white min-h-screen font-sans">
-    <div id="app" class="p-6">
-        <!-- LOGIN VIEW -->
-        <div v-if="!user" class="max-w-md mx-auto mt-20 bg-gray-800 p-8 rounded-xl shadow-2xl border border-gray-700">
-            <h1 class="text-3xl font-black text-blue-500 mb-6 text-center italic tracking-tighter">COLLECT PRO</h1>
-            <input v-model="email" type="email" placeholder="Your Email" class="w-full p-3 mb-4 bg-gray-700 border border-gray-600 rounded-lg outline-none">
-            <button @click="login" class="w-full bg-blue-600 hover:bg-blue-500 p-3 rounded-lg font-bold transition">Login to Dashboard</button>
-        </div>
-
-        <!-- DASHBOARD VIEW -->
-        <div v-else class="max-w-6xl mx-auto">
-            <div class="flex justify-between items-center mb-10">
-                <div>
-                    <h1 class="text-3xl font-black text-blue-400 tracking-tighter">ACCOUNTS</h1>
-                    <p class="text-xs text-gray-500">Logged in as {{ user.email }}</p>
+<body>
+    <div id="app" v-cloak>
+        <!-- LOGIN SCREEN -->
+        <div v-if="!user" class="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-slate-950 to-slate-900">
+            <div class="glass p-10 rounded-3xl shadow-2xl w-full max-w-md">
+                <div class="text-center mb-10">
+                    <h2 class="text-xs font-bold text-blue-500 uppercase tracking-[0.3em] mb-2">Internal Access</h2>
+                    <h1 class="text-2xl font-800 tracking-tighter text-white">MAFANYOLLE RECOVERIES</h1>
                 </div>
-                <div class="flex gap-4">
-                    <button @click="showAdd = true" class="bg-blue-600 hover:bg-blue-500 px-6 py-2 rounded-full font-bold shadow-lg transition">+ New Debtor</button>
-                    <button @click="logout" class="text-gray-500 hover:text-red-500 text-sm">Logout</button>
+                <div class="space-y-5">
+                    <div>
+                        <label class="text-[10px] font-bold text-slate-500 uppercase ml-1 mb-2 block">Authorized Email</label>
+                        <input v-model="email" type="email" class="w-full p-4 bg-slate-900/50 border border-slate-700 rounded-xl outline-none focus:border-blue-500 text-white transition">
+                    </div>
+                    <button @click="login" class="w-full bg-blue-600 hover:bg-blue-500 text-white p-4 rounded-xl font-bold shadow-lg shadow-blue-900/20 transition flex items-center justify-center gap-2 uppercase text-sm tracking-widest">
+                        Initialize Session <i class="fa-solid fa-bolt-lightning text-xs"></i>
+                    </button>
                 </div>
-            </div>
-
-            <!-- TABLE -->
-            <div class="bg-gray-800 rounded-2xl border border-gray-700 overflow-hidden shadow-2xl">
-                <table class="w-full text-left">
-                    <thead class="bg-gray-900/50 text-gray-500 text-xs uppercase tracking-widest">
-                        <tr>
-                            <th class="p-4">Name</th>
-                            <th class="p-4">Balance</th>
-                            <th class="p-4">Promise Date</th>
-                            <th class="p-4">Status</th>
-                            <th class="p-4 text-right">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-700">
-                        <tr v-for="d in debtors" :key="d.id" class="hover:bg-gray-700/30 transition">
-                            <td class="p-4 font-bold">{{ d.name }}</td>
-                            <td class="p-4 font-mono text-blue-400 font-bold tracking-tighter">${{ d.total_debt }}</td>
-                            <td class="p-4 text-sm text-gray-400">
-                                {{ d.due_date || 'No date set' }}
-                            </td>
-                            <td class="p-4">
-                                <span v-if="isOverdue(d.due_date)" class="bg-red-500/20 text-red-500 px-2 py-1 rounded text-[10px] font-black border border-red-500/30 animate-pulse">OVERDUE</span>
-                                <span v-else-if="d.due_date" class="bg-green-500/20 text-green-500 px-2 py-1 rounded text-[10px] font-black border border-green-500/30">CURRENT</span>
-                                <span v-else class="text-gray-600 text-[10px] uppercase font-bold">Pending Plan</span>
-                            </td>
-                            <td class="p-4 text-right">
-                                <button @click="setPlan(d)" class="text-blue-500 hover:underline text-xs font-bold uppercase tracking-tighter">Set Date</button>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
             </div>
         </div>
 
-        <!-- MODAL: ADD DEBTOR -->
-        <div v-if="showAdd" class="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
-            <div class="bg-gray-800 p-8 rounded-xl w-full max-w-sm border border-gray-700 shadow-2xl">
-                <h2 class="text-xl font-bold mb-4 text-blue-400">New Account</h2>
-                <input v-model="form.name" placeholder="Full Name" class="w-full p-3 mb-2 bg-gray-700 border border-gray-600 rounded-lg outline-none">
-                <input v-model="form.debt" placeholder="Amount ($)" type="number" class="w-full p-3 mb-6 bg-gray-700 border border-gray-600 rounded-lg outline-none">
-                <div class="flex gap-2">
-                    <button @click="save" class="flex-1 bg-blue-600 p-3 rounded-lg font-bold hover:bg-blue-500 transition">Save Debtor</button>
-                    <button @click="showAdd = false" class="flex-1 bg-gray-700 p-3 rounded-lg font-bold">Cancel</button>
+        <!-- ENTERPRISE DASHBOARD -->
+        <div v-else class="min-h-screen flex">
+            <!-- Sidebar -->
+            <aside class="w-72 glass border-r border-slate-800 flex flex-col hidden lg:flex">
+                <div class="p-8">
+                    <div class="text-blue-500 text-xs font-black uppercase tracking-[0.2em] mb-1 italic">Mafanyolle</div>
+                    <div class="text-xl font-800 text-white tracking-tighter uppercase">Recoveries</div>
+                </div>
+
+                <div class="px-4 py-2">
+                    <div class="text-[10px] font-bold text-slate-500 uppercase px-4 mb-4">Main Operations</div>
+                    <nav class="space-y-1">
+                        <div class="sidebar-item-active flex items-center gap-3 px-4 py-3 rounded-r-xl cursor-pointer">
+                            <i class="fa-solid fa-chart-line w-5 text-blue-500"></i> Command Center
+                        </div>
+                        <div class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white transition cursor-pointer">
+                            <i class="fa-solid fa-briefcase w-5"></i> Portfolio
+                        </div>
+                        <div class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white transition cursor-pointer relative">
+                            <i class="fa-solid fa-bell w-5"></i> Notifications
+                            <span v-if="overdueCount > 0" class="absolute right-4 bg-red-600 text-[10px] px-2 py-0.5 rounded-full text-white">{{ overdueCount }}</span>
+                        </div>
+                    </nav>
+                </div>
+
+                <div class="mt-auto p-6 border-t border-slate-800">
+                    <div class="flex items-center gap-3 mb-6 px-2">
+                        <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-xs font-bold text-white">{{ user.email.charAt(0).toUpperCase() }}</div>
+                        <div class="text-xs overflow-hidden text-ellipsis whitespace-nowrap">{{ user.email }}</div>
+                    </div>
+                    <button @click="logout" class="w-full flex items-center gap-3 px-4 py-3 text-slate-500 hover:text-red-500 transition font-bold text-xs uppercase tracking-widest">
+                        <i class="fa-solid fa-power-off"></i> Terminate
+                    </button>
+                </div>
+            </aside>
+
+            <!-- Main Workspace -->
+            <main class="flex-1 flex flex-col min-h-screen overflow-hidden bg-slate-950">
+                <!-- Top Nav -->
+                <header class="h-20 border-b border-slate-800 flex items-center justify-between px-8 bg-slate-950/50 backdrop-blur-md sticky top-0 z-40">
+                    <div class="flex items-center gap-4 flex-1">
+                        <i class="fa-solid fa-magnifying-glass text-slate-500"></i>
+                        <input v-model="search" type="text" placeholder="Search Master Ledger..." class="bg-transparent outline-none text-sm w-full max-w-md">
+                    </div>
+                    <div class="flex items-center gap-6">
+                        <div class="flex items-center gap-2 text-xs font-bold text-slate-400">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+                            Live System
+                        </div>
+                        <button @click="showAdd = true" class="bg-white text-slate-950 px-5 py-2 rounded-lg font-bold text-xs uppercase tracking-widest hover:bg-blue-500 hover:text-white transition shadow-lg">
+                            + New Entry
+                        </button>
+                    </div>
+                </header>
+
+                <!-- Scrollable Content -->
+                <div class="flex-1 overflow-y-auto p-8">
+                    <!-- High Level Analytics -->
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                        <div class="glass p-6 rounded-2xl">
+                            <div class="text-[10px] font-bold text-slate-500 uppercase mb-4 tracking-widest">Total Recovery Volume</div>
+                            <div class="text-2xl font-bold font-mono text-white">${{ totalDebt.toLocaleString() }}</div>
+                        </div>
+                        <div class="glass p-6 rounded-2xl border-l-4 border-l-red-600">
+                            <div class="text-[10px] font-bold text-slate-500 uppercase mb-4 tracking-widest">At Risk (Overdue)</div>
+                            <div class="text-2xl font-bold font-mono text-red-500">${{ overdueDebt.toLocaleString() }}</div>
+                        </div>
+                        <div class="glass p-6 rounded-2xl border-l-4 border-l-blue-600">
+                            <div class="text-[10px] font-bold text-slate-500 uppercase mb-4 tracking-widest">Active Cases</div>
+                            <div class="text-2xl font-bold font-mono text-white">{{ debtors.length }}</div>
+                        </div>
+                        <div class="glass p-6 rounded-2xl border-l-4 border-l-emerald-600">
+                            <div class="text-[10px] font-bold text-slate-500 uppercase mb-4 tracking-widest">Settled This Month</div>
+                            <div class="text-2xl font-bold font-mono text-emerald-500">${{ settledToday.toLocaleString() }}</div>
+                        </div>
+                    </div>
+
+                    <!-- NOTIFICATION BAR -->
+                    <div v-if="overdueCount > 0" class="mb-8 flex items-center gap-4 bg-red-900/20 border border-red-900/50 p-4 rounded-xl">
+                        <i class="fa-solid fa-triangle-exclamation text-red-500"></i>
+                        <div class="text-xs font-bold text-red-200 uppercase tracking-widest">
+                            URGENT: {{ overdueCount }} accounts have breached their promise-to-pay (PTP) agreements. Immediate action required.
+                        </div>
+                    </div>
+
+                    <!-- Main Ledger -->
+                    <div class="glass rounded-2xl overflow-hidden shadow-2xl">
+                        <table class="w-full text-left">
+                            <thead>
+                                <tr class="bg-slate-900/80 text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] border-b border-slate-800">
+                                    <th class="p-6">Entity Name</th>
+                                    <th class="p-6">Liability</th>
+                                    <th class="p-6">PTP Date</th>
+                                    <th class="p-6">Case Status</th>
+                                    <th class="p-6 text-right">Operations</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-800">
+                                <tr v-for="d in filteredDebtors" :key="d.id" class="hover:bg-white/5 transition group">
+                                    <td class="p-6">
+                                        <div class="font-bold text-white tracking-tight">{{ d.name }}</div>
+                                        <div class="text-[10px] text-slate-500 uppercase font-mono">{{ d.id.slice(0,13) }}</div>
+                                    </td>
+                                    <td class="p-6 font-mono text-white font-bold tracking-tighter">${{ parseFloat(d.total_debt).toLocaleString() }}</td>
+                                    <td class="p-6 text-xs font-bold">
+                                        <div v-if="d.due_date" :class="isOverdue(d.due_date) ? 'text-red-500' : 'text-slate-400'">
+                                            <i class="fa-solid fa-calendar-day mr-2 opacity-50"></i> {{ d.due_date }}
+                                        </div>
+                                        <div v-else class="text-slate-700 italic">No Arrangement</div>
+                                    </td>
+                                    <td class="p-6">
+                                        <span v-if="isOverdue(d.due_date)" class="bg-red-600 text-white px-2 py-1 rounded text-[9px] font-black uppercase tracking-widest flex items-center gap-1 w-fit animate-pulse">
+                                            <i class="fa-solid fa-skull text-[8px]"></i> Breach
+                                        </span>
+                                        <span v-else-if="d.due_date" class="border border-emerald-500 text-emerald-500 px-2 py-1 rounded text-[9px] font-black uppercase tracking-widest flex items-center gap-1 w-fit">
+                                            <i class="fa-solid fa-clock"></i> Active PTP
+                                        </span>
+                                        <span v-else class="bg-slate-800 text-slate-500 px-2 py-1 rounded text-[9px] font-black uppercase tracking-widest flex items-center gap-1 w-fit">
+                                            Unscheduled
+                                        </span>
+                                    </td>
+                                    <td class="p-6 text-right">
+                                        <div class="flex justify-end gap-3 opacity-0 group-hover:opacity-100 transition">
+                                            <button @click="setPlan(d)" class="text-slate-400 hover:text-white" title="Schedule PTP"><i class="fa-solid fa-calendar-plus"></i></button>
+                                            <button @click="markAsPaid(d)" class="text-emerald-500 hover:text-emerald-400" title="Full Settlement"><i class="fa-solid fa-handshake"></i></button>
+                                            <button @click="deleteDebtor(d.id)" class="text-slate-700 hover:text-red-500"><i class="fa-solid fa-trash"></i></button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <!-- MODAL: ADD CASE -->
+        <div v-if="showAdd" class="fixed inset-0 bg-black/90 backdrop-blur-xl flex items-center justify-center p-4 z-50">
+            <div class="glass p-8 rounded-3xl w-full max-w-md border border-slate-700">
+                <div class="mb-8">
+                    <h2 class="text-xl font-bold text-white tracking-tighter uppercase">Initiate New Recovery Case</h2>
+                    <p class="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Mafanyolle Internal Records</p>
+                </div>
+                <div class="space-y-6">
+                    <div>
+                        <label class="text-[10px] font-bold text-slate-500 uppercase ml-1 mb-2 block tracking-widest">Entity Full Name</label>
+                        <input v-model="form.name" class="w-full p-4 bg-slate-900 border border-slate-800 rounded-xl outline-none focus:border-blue-500 text-white">
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-bold text-slate-500 uppercase ml-1 mb-2 block tracking-widest">Outstanding Liability ($)</label>
+                        <input v-model="form.debt" type="number" class="w-full p-4 bg-slate-900 border border-slate-800 rounded-xl outline-none focus:border-blue-500 text-white font-mono">
+                    </div>
+                    <div class="flex gap-4 pt-6">
+                        <button @click="save" class="flex-1 bg-white text-slate-950 p-4 rounded-xl font-black uppercase text-xs tracking-widest">Confirm</button>
+                        <button @click="showAdd = false" class="flex-1 bg-slate-800 text-slate-400 p-4 rounded-xl font-black uppercase text-xs tracking-widest">Abort</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -87,8 +212,26 @@
         createApp({
             data() {
                 return { 
-                    user: null, email: '', debtors: [], showAdd: false,
+                    user: null, email: '', debtors: [], showAdd: false, search: '',
                     form: { name: '', debt: '' }
+                }
+            },
+            computed: {
+                filteredDebtors() {
+                    return this.debtors.filter(d => d.name.toLowerCase().includes(this.search.toLowerCase()));
+                },
+                totalDebt() {
+                    return this.debtors.reduce((s, d) => s + parseFloat(d.total_debt), 0);
+                },
+                overdueDebt() {
+                    return this.debtors.filter(d => this.isOverdue(d.due_date)).reduce((s, d) => s + parseFloat(d.total_debt), 0);
+                },
+                overdueCount() {
+                    return this.debtors.filter(d => this.isOverdue(d.due_date)).length;
+                },
+                settledToday() {
+                    // Placeholder for actual daily settlements logic
+                    return 0;
                 }
             },
             async mounted() {
@@ -97,27 +240,38 @@
             },
             methods: {
                 async login() {
-                    const pass = prompt("Enter your Supabase password:");
+                    const pass = prompt("SECURE ACCESS REQUIRED: Enter Intelligence Clearance Password");
                     const { data, error } = await client.auth.signInWithPassword({ email: this.email, password: pass });
-                    if (error) alert(error.message);
+                    if (error) alert("ACCESS DENIED: Unauthorized Credentials");
                     else { this.user = data.user; this.load(); }
                 },
                 async logout() { await client.auth.signOut(); window.location.reload(); },
                 async load() {
-                    const { data } = await client.from('debtors').select('*').order('name');
+                    const { data } = await client.from('debtors').select('*').order('created_at', { ascending: false });
                     this.debtors = data || [];
                 },
                 async save() {
-                    const { error } = await client.from('debtors').insert([{ name: this.form.name, total_debt: parseFloat(this.form.debt) }]);
-                    if (error) alert(error.message);
-                    else { this.showAdd = false; this.form = { name: '', debt: '' }; this.load(); }
+                    if(!this.form.name || !this.form.debt) return;
+                    await client.from('debtors').insert([{ name: this.form.name, total_debt: parseFloat(this.form.debt) }]);
+                    this.showAdd = false; this.form = { name: '', debt: '' }; this.load();
                 },
                 async setPlan(debtor) {
-                    const date = prompt("Promise Date (YYYY-MM-DD):", "2025-01-01");
+                    const date = prompt("INPUT PTP DATE (YYYY-MM-DD):");
                     if (date) {
-                        const { error } = await client.from('debtors').update({ due_date: date }).eq('id', debtor.id);
-                        if (error) alert(error.message);
-                        else this.load();
+                        await client.from('debtors').update({ due_date: date }).eq('id', debtor.id);
+                        this.load();
+                    }
+                },
+                async markAsPaid(debtor) {
+                    if(confirm("Confirm total liability settlement for this entity?")) {
+                        await client.from('debtors').update({ total_debt: 0, due_date: null }).eq('id', debtor.id);
+                        this.load();
+                    }
+                },
+                async deleteDebtor(id) {
+                    if(confirm("Permanently scrub this case from the ledger?")) {
+                        await client.from('debtors').delete().eq('id', id);
+                        this.load();
                     }
                 },
                 isOverdue(date) {
