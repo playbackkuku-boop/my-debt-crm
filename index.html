@@ -95,8 +95,20 @@
             },
             methods: {
                 async login() {
-                    await client.auth.signInWithOtp({ email: this.email });
-                    alert("Magic Link sent! Check your email.");
+    // This now asks for the password you just created in Supabase
+    const password = prompt("Enter your password:");
+    const { data, error } = await client.auth.signInWithPassword({
+        email: this.email,
+        password: password
+    });
+
+    if (error) {
+        alert("Login failed: " + error.message);
+    } else {
+        this.user = data.user;
+        this.load();
+    }
+}
                 },
                 async logout() {
                     await client.auth.signOut();
