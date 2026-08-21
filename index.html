@@ -12,45 +12,54 @@
     <div id="app" class="p-6">
         <!-- LOGIN VIEW -->
         <div v-if="!user" class="max-w-md mx-auto mt-20 bg-gray-800 p-8 rounded-xl shadow-2xl border border-gray-700">
-            <h1 class="text-3xl font-black text-blue-500 mb-6 text-center tracking-tighter">COLLECT PRO</h1>
+            <h1 class="text-3xl font-black text-blue-500 mb-6 text-center italic tracking-tighter">COLLECT PRO</h1>
+            <p class="text-xs text-gray-400 mb-4 text-center">Login with Email & Password</p>
             <input v-model="email" type="email" placeholder="Your Email" class="w-full p-3 mb-4 bg-gray-700 border border-gray-600 rounded-lg outline-none focus:ring-2 focus:ring-blue-500">
-            <button @click="login" class="w-full bg-blue-600 hover:bg-blue-500 p-3 rounded-lg font-bold transition">Send Login Link</button>
+            <button @click="login" class="w-full bg-blue-600 hover:bg-blue-500 p-3 rounded-lg font-bold transition shadow-lg">Login to Dashboard</button>
         </div>
 
         <!-- DASHBOARD VIEW -->
-        <div v-else class="max-w-5xl mx-auto">
+        <div v-else class="max-w-6xl mx-auto">
             <div class="flex justify-between items-center mb-10">
-                <h1 class="text-3xl font-black text-blue-400">DASHBOARD</h1>
+                <div>
+                    <h1 class="text-3xl font-black text-blue-400">ACCOUNTS</h1>
+                    <p class="text-xs text-gray-500">Logged in as {{ user.email }}</p>
+                </div>
                 <div class="flex gap-4">
-                    <button @click="showAdd = true" class="bg-blue-600 px-6 py-2 rounded-full font-bold">+ New Debtor</button>
-                    <button @click="logout" class="text-gray-500 hover:text-red-500">Logout</button>
+                    <button @click="showAdd = true" class="bg-blue-600 hover:bg-blue-500 px-6 py-2 rounded-full font-bold shadow-lg transition">+ New Debtor</button>
+                    <button @click="logout" class="text-gray-500 hover:text-red-500 text-sm font-bold">Logout</button>
                 </div>
             </div>
 
-            <!-- TABLE -->
-            <div class="bg-gray-800 rounded-2xl border border-gray-700 overflow-hidden shadow-xl">
+            <!-- DEBTOR TABLE -->
+            <div class="bg-gray-800 rounded-2xl border border-gray-700 overflow-hidden shadow-2xl">
                 <table class="w-full text-left">
-                    <thead class="bg-gray-900/50 text-gray-500 text-xs uppercase">
+                    <thead class="bg-gray-900/50 text-gray-500 text-xs uppercase tracking-widest">
                         <tr>
-                            <th class="p-4">Debtor</th>
-                            <th class="p-4">Balance</th>
-                            <th class="p-4">Arrangement</th>
-                            <th class="p-4 text-right">Status</th>
+                            <th class="p-4">Debtor Name</th>
+                            <th class="p-4">Total Balance</th>
+                            <th class="p-4">Promise Date</th>
+                            <th class="p-4">Status</th>
+                            <th class="p-4 text-right">Action</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-700">
                         <tr v-for="d in debtors" :key="d.id" class="hover:bg-gray-700/30 transition">
-                            <td class="p-4 font-bold">{{ d.name }}<br><span class="text-xs font-normal text-gray-500">{{ d.email }}</span></td>
+                            <td class="p-4 font-bold text-gray-100">{{ d.name }}</td>
                             <td class="p-4 font-mono text-blue-400 font-bold">${{ d.total_debt }}</td>
-                            <td class="p-4 text-sm text-gray-400">
-                                <span v-if="d.arrangements?.[0]" :class="isOverdue(d.arrangements[0].due_date) ? 'text-red-500 font-bold' : ''">
-                                    {{ d.arrangements[0].due_date }}
+                            <td class="p-4 text-sm">
+                                <span v-if="d.due_date" :class="isOverdue(d.due_date) ? 'text-red-500 font-bold underline' : 'text-gray-400'">
+                                    {{ d.due_date }}
                                 </span>
-                                <span v-else class="italic text-gray-600">None set</span>
+                                <span v-else class="text-gray-600 italic">No date set</span>
+                            </td>
+                            <td class="p-4">
+                                <span v-if="isOverdue(d.due_date)" class="bg-red-500/20 text-red-500 px-2 py-1 rounded text-[10px] font-black border border-red-500/30 animate-pulse">OVERDUE</span>
+                                <span v-else-if="d.due_date" class="bg-green-500/20 text-green-500 px-2 py-1 rounded text-[10px] font-black border border-green-500/30 font-bold">CURRENT</span>
+                                <span v-else class="text-gray-600 text-[10px] font-bold">PENDING</span>
                             </td>
                             <td class="p-4 text-right">
-                                <span v-if="d.arrangements?.[0] && isOverdue(d.arrangements[0].due_date)" class="bg-red-500/20 text-red-500 px-2 py-1 rounded text-[10px] font-black border border-red-500/30">OVERDUE</span>
-                                <span v-else class="bg-green-500/20 text-green-500 px-2 py-1 rounded text-[10px] font-black border border-green-500/30">CURRENT</span>
+                                <button @click="setPlan(d)" class="bg-slate-700 hover:bg-blue-600 px-3 py-1 rounded text-[10px] font-bold transition">SET DATE</button>
                             </td>
                         </tr>
                     </tbody>
@@ -58,26 +67,26 @@
             </div>
         </div>
 
-        <!-- ADD MODAL -->
-        <div v-if="showAdd" class="fixed inset-0 bg-black/80 flex items-center justify-center p-4">
-            <div class="bg-gray-800 p-8 rounded-xl w-full max-w-md border border-gray-700">
-                <h2 class="text-xl font-bold mb-4">Add New Account</h2>
-                <input v-model="form.name" placeholder="Name" class="w-full p-2 mb-2 bg-gray-700 border border-gray-600 rounded">
-                <input v-model="form.email" placeholder="Email" class="w-full p-2 mb-2 bg-gray-700 border border-gray-600 rounded">
-                <input v-model="form.debt" placeholder="Amount ($)" type="number" class="w-full p-2 mb-4 bg-gray-700 border border-gray-600 rounded">
-                <div class="flex gap-2">
-                    <button @click="save" class="flex-1 bg-blue-600 p-2 rounded font-bold">Save</button>
-                    <button @click="showAdd = false" class="flex-1 bg-gray-700 p-2 rounded font-bold">Cancel</button>
+        <!-- MODAL: ADD DEBTOR -->
+        <div v-if="showAdd" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            <div class="bg-gray-800 p-8 rounded-2xl w-full max-w-md border border-gray-700 shadow-2xl">
+                <h2 class="text-xl font-bold mb-6 text-blue-400">Add New Account</h2>
+                <div class="space-y-4">
+                    <input v-model="form.name" placeholder="Debtor Full Name" class="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg outline-none">
+                    <input v-model="form.debt" placeholder="Total Debt Amount ($)" type="number" class="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg outline-none">
+                    <div class="flex gap-3 pt-4">
+                        <button @click="save" class="flex-1 bg-blue-600 p-3 rounded-lg font-bold hover:bg-blue-500 transition">Save Debtor</button>
+                        <button @click="showAdd = false" class="flex-1 bg-gray-700 p-3 rounded-lg font-bold text-gray-400">Cancel</button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        // !!! REPLACE THE TWO LINES BELOW WITH YOUR KEYS FROM SUPABASE SETTINGS > API !!!
-        const S_URL = 'https://idxtnkisgqucufafjidv.supabase.co/rest/v1/';
+        const S_URL = 'https://idxtnkisgqucufafjidv.supabase.co';
         const S_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkeHRua2lzZ3F1Y3VmYWZqaWR2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODczMjI2MTEsImV4cCI6MjEwMjg5ODYxMX0.Oi0_qsMfQUbE3V5uoi1VOSjPwks41xy65tG77v_ICyc';
-
+        
         const client = supabase.createClient(S_URL, S_KEY);
         const { createApp } = Vue;
 
@@ -85,48 +94,69 @@
             data() {
                 return { 
                     user: null, email: '', debtors: [], showAdd: false,
-                    form: { name: '', email: '', debt: '' }
+                    form: { name: '', debt: '' }
                 }
             },
             async mounted() {
                 const { data } = await client.auth.getSession();
-                this.user = data.session?.user;
-                if (this.user) this.load();
+                if (data.session) {
+                    this.user = data.session.user;
+                    this.load();
+                }
             },
             methods: {
                 async login() {
-    // This now asks for the password you just created in Supabase
-    const password = prompt("Enter your password:");
-    const { data, error } = await client.auth.signInWithPassword({
-        email: this.email,
-        password: password
-    });
+                    if (!this.email) return alert("Enter your email first");
+                    const password = prompt("Enter your password:");
+                    if (!password) return;
 
-    if (error) {
-        alert("Login failed: " + error.message);
-    } else {
-        this.user = data.user;
-        this.load();
-    }
-}
+                    const { data, error } = await client.auth.signInWithPassword({
+                        email: this.email,
+                        password: password
+                    });
+
+                    if (error) {
+                        alert("Login Error: " + error.message);
+                    } else {
+                        this.user = data.user;
+                        this.load();
+                    }
                 },
                 async logout() {
                     await client.auth.signOut();
                     window.location.reload();
                 },
                 async load() {
-                    const { data } = await client.from('debtors').select('*, arrangements(*)');
+                    const { data } = await client.from('debtors').select('*').order('name', { ascending: true });
                     this.debtors = data || [];
                 },
                 async save() {
-                    await client.from('debtors').insert([{ 
-                        name: this.form.name, email: this.form.email, total_debt: this.form.debt 
-                    }]);
-                    this.showAdd = false;
-                    this.load();
+                    if (!this.form.name || !this.form.debt) return alert("Fill in all fields");
+                    const { error } = await client.from('debtors').insert([
+                        { name: this.form.name, total_debt: parseFloat(this.form.debt) }
+                    ]);
+                    if (error) alert(error.message);
+                    else {
+                        this.showAdd = false;
+                        this.form = { name: '', debt: '' };
+                        this.load();
+                    }
+                },
+                async setPlan(debtor) {
+                    const date = prompt("Enter promised payment date (YYYY-MM-DD):", "2025-01-01");
+                    if (date) {
+                        const { error } = await client.from('debtors').update({ due_date: date }).eq('id', debtor.id);
+                        if (error) alert(error.message);
+                        else this.load();
+                    }
                 },
                 isOverdue(date) {
-                    return new Date(date) < new Date().setHours(0,0,0,0);
+                    if (!date) return false;
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    const promiseDate = new Date(date);
+                    promiseDate.setHours(0, 0, 0, 0);
+                    return promiseDate < today;
                 }
             }
         }).mount('#app')
