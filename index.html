@@ -119,4 +119,180 @@
 
             <!-- TELEPHONY -->
             <aside v-if="dialerVisible" class="w-80 glass border-l border-slate-800 p-6 flex flex-col shrink-0">
-                <div class="flex justify-between items-center mb-10"><h3 class="text-[10px] font-bla
+                <div class="flex justify-between items-center mb-10"><h3 class="text-[10px] font-black uppercase text-blue-500 italic">Dialer Suite</h3><button @click="dialerVisible = false"><i class="fa-solid fa-xmark text-slate-500"></i></button></div>
+                <div class="bg-black rounded-[40px] p-6 border border-slate-800 mb-8 text-center h-48 flex flex-col justify-center shadow-inner">
+                    <div class="text-[10px] uppercase font-bold tracking-widest mb-2" :class="onCall ? 'text-emerald-500 animate-pulse' : 'text-slate-600'">{{ onCall ? 'In Call' : 'Ready' }}</div>
+                    <div class="text-2xl font-black text-white font-mono tracking-tighter italic italic">{{ dialerNumber || '0000000000' }}</div>
+                    <div v-if="onCall" class="text-lg font-mono text-emerald-500 font-bold mt-2">{{ callTimer }}</div>
+                </div>
+                <div class="flex justify-center gap-6 mt-auto">
+                    <button v-if="!onCall" @click="startCall" class="w-16 h-16 bg-emerald-600 rounded-full flex items-center justify-center text-white text-2xl hover:bg-emerald-500 transition"><i class="fa-solid fa-phone"></i></button>
+                    <button v-else @click="endCall" class="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center text-white text-2xl hover:bg-red-500 transition"><i class="fa-solid fa-phone-slash"></i></button>
+                </div>
+            </aside>
+        </div>
+
+        <!-- FULL-SCREEN WORK STATION -->
+        <div v-if="activeCase" class="fixed inset-0 bg-slate-950 flex flex-col z-[100] animate-in slide-in-from-bottom duration-300">
+            <div class="h-20 glass border-b border-slate-800 flex items-center justify-between px-10">
+                <div class="flex items-center gap-6">
+                    <div class="bg-blue-600 px-3 py-1 rounded text-[10px] font-black uppercase">Working Matter</div>
+                    <h2 class="text-2xl font-800 uppercase text-white tracking-tighter italic italic">{{ activeCase.name }}</h2>
+                </div>
+                <button @click="activeCase = null"><i class="fa-solid fa-circle-xmark text-3xl text-slate-500 hover:text-white transition"></i></button>
+            </div>
+            <div class="flex-1 flex overflow-hidden">
+                <div class="w-1/2 p-10 border-r border-slate-800 overflow-y-auto bg-slate-950 flex flex-col">
+                    <h3 class="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-6 border-b border-blue-500/20 pb-2">Audit Trail</h3>
+                    <div class="space-y-4">
+                        <div v-for="log in (activeCase.work_history || []).slice().reverse()" class="bg-slate-900/50 p-4 rounded-xl border border-slate-800">
+                            <div class="flex justify-between text-[10px] font-bold mb-1 uppercase tracking-widest"><span class="text-blue-500">{{ log.outcome }}</span><span class="text-slate-600 italic italic">{{ log.date }}</span></div>
+                            <p class="text-sm text-slate-300 italic italic">{{ log.note }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="w-1/2 p-10 space-y-6 overflow-y-auto bg-slate-900/10 flex flex-col">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-[10px] font-bold text-slate-500 uppercase block mb-1 italic italic">Wrap Code</label>
+                            <select v-model="workForm.outcome" class="w-full bg-slate-900 border border-slate-700 p-4 rounded-xl text-xs font-bold text-white outline-none">
+                                <option value="PTP">PTP (Promise)</option>
+                                <option value="STAT_REQ">Statement Requested</option>
+                                <option value="REFUSAL">Refuse to Pay</option>
+                                <option value="INT_NOTE">Internal Note</option>
+                                <option v-if="role === 'supervisor'" value="PYMT_RCVD">SUPERVISOR: Payment Received</option>
+                                <option v-if="role === 'supervisor'" value="PAID_UP">SUPERVISOR: Paid Up</option>
+                            </select>
+                        </div>
+                        <div v-if="workForm.outcome === 'PTP' || activeCase.due_date">
+                            <label class="text-[10px] font-bold text-slate-500 uppercase block mb-1">Calendar</label>
+                            <input v-model="workForm.dueDate" type="date" class="w-full bg-slate-900 border border-slate-800 p-4 rounded-xl text-xs font-bold text-white outline-none">
+                        </div>
+                    </div>
+                    <div v-if="workForm.outcome === 'PYMT_RCVD' && role === 'supervisor'">
+                        <label class="text-[10px] font-bold text-emerald-500 uppercase block mb-1 italic italic">Recaptured Amount (R)</label>
+                        <input v-model="workForm.paymentAmount" type="number" class="w-full bg-emerald-900/10 border border-emerald-500 p-4 rounded-xl text-sm font-bold text-white outline-none">
+                    </div>
+                    <textarea v-model="workForm.note" class="flex-1 bg-slate-900 border border-slate-800 p-5 rounded-xl text-sm text-white outline-none resize-none italic" placeholder="Enter conversation details..."></textarea>
+                    <button @click="submitWork" class="w-full bg-blue-600 p-6 rounded-2xl font-black uppercase text-xs tracking-widest transition shadow-2xl">Confirm Update</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ADD MODAL -->
+        <div v-if="showAdd" class="fixed inset-0 bg-black/95 flex items-center justify-center p-4 z-[110]">
+            <div class="glass p-10 rounded-[40px] w-full max-w-2xl border border-slate-800 shadow-2xl text-left">
+                <h2 class="text-2xl font-800 text-white uppercase tracking-tighter mb-8 italic italic">Matter Entry</h2>
+                <div class="grid grid-cols-2 gap-4 mb-8">
+                    <input v-model="addForm.name" placeholder="Name" class="bg-slate-900 border border-slate-800 p-4 rounded-xl text-xs text-white outline-none">
+                    <input v-model="addForm.phone" placeholder="Phone" class="bg-slate-900 border border-slate-800 p-4 rounded-xl text-xs text-white outline-none">
+                    <input v-model="addForm.id_number" placeholder="ID Number" class="bg-slate-900 border border-slate-800 p-4 rounded-xl text-xs text-white outline-none">
+                    <input v-model="addForm.ref_number" placeholder="Reference" class="bg-slate-900 border border-slate-800 p-4 rounded-xl text-xs text-white outline-none">
+                    <input v-model="addForm.book_name" placeholder="Book" class="bg-slate-900 border border-slate-800 p-4 rounded-xl text-xs text-white outline-none">
+                    <input v-model="addForm.total_debt" type="number" placeholder="Balance (R)" class="bg-slate-900 border border-slate-800 p-4 rounded-xl text-xs text-white outline-none">
+                </div>
+                <div class="flex gap-4"><button @click="saveDebtor" class="flex-1 bg-blue-600 p-4 rounded-xl font-bold text-xs uppercase tracking-widest transition">Add</button><button @click="showAdd = false" class="flex-1 bg-slate-800 text-slate-500 p-4 rounded-xl font-bold text-xs uppercase transition hover:text-white">Cancel</button></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const S_URL = 'https://idxtnkisgqucufafjidv.supabase.co';
+        const S_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkeHRua2lzZ3F1Y3VmYWZqaWR2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODczMjI2MTEsImV4cCI6MjEwMjg5ODYxMX0.Oi0_qsMfQUbE3V5uoi1VOSjPwks41xy65tG77v_ICyc';
+        const client = supabase.createClient(S_URL, S_KEY);
+
+        Vue.createApp({
+            data() {
+                return {
+                    user: null, role: 'collector', loginEmail: '', debtors: [], search: '', showAdd: false, activeCase: null, view: 'ledger',
+                    addForm: { name: '', id_number: '', phone: '', ref_number: '', book_name: '', total_debt: 0 },
+                    workForm: { outcome: 'INT_NOTE', note: '', dueDate: '', paymentAmount: 0 },
+                    dialerVisible: false, onCall: false, dialerNumber: '', callTimer: '00:00', callInterval: null, seconds: 0,
+                    agentStatus: 'Ready'
+                }
+            },
+            computed: {
+                filteredDebtors() {
+                    const s = this.search.toLowerCase();
+                    return this.debtors.filter(d => (d.name || '').toLowerCase().includes(s) || (d.ref_number || '').toLowerCase().includes(s));
+                },
+                totalDebt() { return this.debtors.reduce((s, d) => s + parseFloat(d.total_debt || 0), 0); },
+                totalCollected() { return this.debtors.reduce((s, d) => s + parseFloat(d.collected_amount || 0), 0); },
+                overdueDebt() { return this.debtors.filter(d => this.isOverdue(d.due_date)).reduce((s, d) => s + parseFloat(d.total_debt || 0), 0); }
+            },
+            async mounted() {
+                const { data: { session } } = await client.auth.getSession();
+                if (session) { 
+                    this.user = session.user;
+                    const { data: prof } = await client.from('profiles').select('role').eq('id', this.user.id).single();
+                    this.role = prof ? prof.role : 'collector';
+                    this.load(); 
+                }
+            },
+            methods: {
+                formatMoney(v) { return parseFloat(v || 0).toLocaleString('en-ZA', { minimumFractionDigits: 2 }); },
+                async login() {
+                    const pass = prompt("SECURE ACCESS: Enter Password");
+                    if (!pass) return;
+                    const { data, error } = await client.auth.signInWithPassword({ email: this.loginEmail, password: pass });
+                    if (error) alert("Denied: " + error.message); else { window.location.reload(); }
+                },
+                async logout() { await client.auth.signOut(); window.location.reload(); },
+                async load() {
+                    const { data, error } = await client.from('debtors').select('*').order('created_at', { ascending: false });
+                    if (error) console.error(error.message); else this.debtors = data || [];
+                },
+                async updateStatus() {
+                    await client.from('agent_logs').insert([{ user_id: this.user.id, status: this.agentStatus }]);
+                },
+                async handleFileUpload(event) {
+                    const file = event.target.files[0];
+                    if(!file) return;
+                    Papa.parse(file, {
+                        header: true,
+                        complete: async (results) => {
+                            const cleanData = results.data.map(r => ({
+                                name: r.name, phone: r.phone, id_number: r.id_number, ref_number: r.ref_number,
+                                book_name: r.book_name, total_debt: parseFloat(r.total_debt) || 0, user_id: this.user.id
+                            })).filter(r => r.name);
+                            const { error } = await client.from('debtors').insert(cleanData);
+                            if (error) alert(error.message); else { this.load(); this.view = 'ledger'; }
+                        }
+                    });
+                },
+                initiateCall(d) { this.dialerVisible = true; this.dialerNumber = d.phone; this.activeCase = d; },
+                startCall() {
+                    this.onCall = true; this.seconds = 0;
+                    this.callInterval = setInterval(() => { this.seconds++; const m = Math.floor(this.seconds/60).toString().padStart(2,'0'); const s = (this.seconds%60).toString().padStart(2,'0'); this.callTimer = `${m}:${s}`; }, 1000);
+                },
+                endCall() {
+                    this.onCall = false; clearInterval(this.callInterval); this.workAccount(this.activeCase); this.workForm.note = `Talk Time: ${this.callTimer}. Outcome: `;
+                },
+                workAccount(d) {
+                    this.activeCase = d;
+                    this.workForm = { outcome: 'INT_NOTE', note: '', dueDate: d.due_date || '', paymentAmount: 0 };
+                },
+                async saveDebtor() {
+                    const { error } = await client.from('debtors').insert([{ ...this.addForm, user_id: this.user.id }]);
+                    if (error) alert(error.message); else { this.showAdd = false; this.load(); }
+                },
+                async submitWork() {
+                    if(!this.workForm.note) return alert("Note required");
+                    const log = { date: new Date().toLocaleString('en-ZA'), outcome: this.workForm.outcome, note: this.workForm.note };
+                    const history = [...(this.activeCase.work_history || []), log];
+                    let up = { work_history: history, last_outcome: this.workForm.outcome };
+                    if (this.workForm.outcome === 'PYMT_RCVD' && this.role === 'supervisor') {
+                        up.collected_amount = (parseFloat(this.activeCase.collected_amount) || 0) + parseFloat(this.workForm.paymentAmount);
+                        up.total_debt = parseFloat(this.activeCase.total_debt) - parseFloat(this.workForm.paymentAmount);
+                    }
+                    if (this.workForm.outcome === 'PTP') up.due_date = this.workForm.dueDate;
+                    if (this.workForm.outcome === 'PAID_UP') { up.total_debt = 0; up.due_date = null; }
+                    const { error } = await client.from('debtors').update(up).eq('id', this.activeCase.id);
+                    if(error) alert(error.message); else { this.activeCase = null; this.load(); }
+                },
+                isOverdue(date) { if (!date) return false; return new Date(date) < new Date().setHours(0,0,0,0); }
+            }
+        }).mount('#app')
+    </script>
+</body>
+</html>
