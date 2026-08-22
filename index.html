@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Mafanyolle Recoveries | Apex Suite v16</title>
+    <title>Mafanyolle Recoveries | Enterprise Suite v17</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -13,208 +13,155 @@
         .excalibur-bg { background-image: linear-gradient(rgba(2, 6, 23, 0.96), rgba(2, 6, 23, 0.96)), url('https://images.unsplash.com/photo-1554224155-169641357599?q=80&w=2000&auto=format&fit=crop'); background-size: cover; background-position: center; }
         .glass { background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(59, 130, 246, 0.2); backdrop-filter: blur(25px); }
         .sidebar-active { background: rgba(59, 130, 246, 0.2); border-left: 4px solid #3b82f6; color: white; }
-        .header-blue { background-color: #002d5b; border-bottom: 2px solid #0070c0; }
-        .btn-action { background-color: #0070c0; color: white; font-weight: 800; text-transform: uppercase; font-size: 10px; padding: 10px 20px; border-radius: 4px; }
-        .accordion-item { background: white; color: #334155; border-bottom: 1px solid #e2e8f0; cursor: pointer; padding: 12px 20px; font-weight: 700; font-size: 11px; text-transform: uppercase; }
         [v-cloak] { display: none; }
+        .btn-action { background-color: #0070c0; color: white; font-weight: 800; text-transform: uppercase; font-size: 10px; padding: 10px 20px; border-radius: 4px; transition: 0.2s; }
+        .btn-action:hover { background-color: white; color: #0070c0; }
     </style>
 </head>
 <body class="excalibur-bg text-sm">
     <div id="app" v-cloak class="h-full flex flex-col">
-        <audio id="beep" src="https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3"></audio>
-        <audio id="ringing" src="https://assets.mixkit.co/active_storage/sfx/1355/1355-preview.mp3" loop></audio>
-
         <!-- LOGIN -->
         <div v-if="!user" class="min-h-screen flex items-center justify-center p-4">
             <div class="glass p-12 rounded-[50px] w-full max-w-sm text-center border-t-4 border-blue-600 shadow-2xl">
                 <i class="fa-solid fa-sword text-blue-500 text-6xl mb-6"></i>
                 <h1 class="text-3xl font-800 text-white uppercase mb-8 italic">Mafanyolle<br>Recoveries</h1>
                 <input v-model="loginEmail" type="email" placeholder="Collector ID" class="w-full p-4 bg-slate-900 border border-slate-700 rounded-2xl mb-4 text-white text-center outline-none">
-                <button @click="login" class="w-full bg-blue-600 hover:bg-blue-500 p-5 rounded-2xl font-bold uppercase text-xs transition">Authenticate</button>
+                <button @click="login" class="w-full bg-blue-600 hover:bg-blue-500 p-5 rounded-2xl font-bold uppercase text-xs transition">Unlock Terminal</button>
             </div>
         </div>
 
-        <!-- MAIN DASHBOARD -->
+        <!-- MAIN INTERFACE -->
         <div v-else class="flex flex-1 overflow-hidden">
             <!-- Sidebar -->
             <aside class="w-72 glass border-r border-blue-900/30 flex flex-col p-8 shrink-0">
-                <div class="mb-8">
+                <div class="mb-10">
                     <div class="text-blue-500 font-black text-[10px] uppercase tracking-widest mb-1 italic">Mafanyolle Recoveries</div>
-                    <div class="text-xl font-800 text-white tracking-tighter uppercase leading-none">Apex Suite</div>
-                    <div class="mt-2"><span class="bg-blue-600 px-2 py-0.5 rounded text-[8px] font-bold uppercase">{{ role }}</span></div>
-                </div>
-
-                <div class="bg-slate-950/50 p-5 rounded-3xl border border-blue-900/30 mb-8">
-                    <label class="text-[9px] font-black text-slate-500 uppercase block mb-3 italic">Session Timer</label>
-                    <div class="text-center font-mono text-xl text-blue-400 font-bold mb-4">{{ statusTimer }}</div>
-                    <select v-model="agentStatus" @change="updateHeartbeat" class="w-full bg-slate-900 border border-slate-700 p-2 rounded-lg text-[10px] font-bold text-white outline-none">
-                        <option value="Ready">🟢 Ready</option>
-                        <option value="Tea">☕ Tea Break</option>
-                        <option value="Lunch">🍕 Lunch</option>
-                        <option value="Admin">📑 Admin</option>
-                    </select>
+                    <div class="text-xl font-800 text-white uppercase tracking-tighter">Command v17</div>
+                    <div class="mt-2 flex items-center gap-2">
+                        <span class="bg-blue-600 px-2 py-0.5 rounded text-[8px] font-black uppercase">{{ role }}</span>
+                        <span class="text-slate-500 text-[9px] font-bold">{{ agentStatus }}</span>
+                    </div>
                 </div>
 
                 <nav class="flex-1 space-y-4 uppercase text-[10px] font-black tracking-widest">
-                    <div @click="view = 'work'" :class="view === 'work' ? 'sidebar-active text-white' : 'text-slate-500'" class="px-4 py-3 rounded-r-lg flex items-center gap-3 cursor-pointer"><i class="fa-solid fa-magnifying-glass"></i> Lookup Matter</div>
-                    <div @click="view = 'chat'" :class="view === 'chat' ? 'sidebar-active text-white' : 'text-slate-500'" class="px-4 py-3 rounded-r-lg flex items-center gap-3 cursor-pointer relative"><i class="fa-solid fa-comments"></i> Secure Chat <span v-if="unreadCount > 0" class="absolute right-4 w-2 h-2 bg-red-500 rounded-full animate-ping"></span></div>
-                    <div v-if="role !== 'collector'" @click="view = 'monitoring'" :class="view === 'monitoring' ? 'sidebar-active text-white' : 'text-slate-500'" class="px-4 py-3 rounded-r-lg flex items-center gap-3 cursor-pointer text-blue-400"><i class="fa-solid fa-tower-broadcast"></i> Live Monitoring</div>
+                    <div @click="view = 'dashboard'" :class="view === 'dashboard' ? 'sidebar-active' : ''" class="px-4 py-3 rounded-lg flex items-center gap-3 cursor-pointer transition"><i class="fa-solid fa-chart-line"></i> Dashboard</div>
+                    <div @click="view = 'work'" :class="view === 'work' ? 'sidebar-active text-white' : 'text-slate-500'" class="px-4 py-3 rounded-r-lg flex items-center gap-3 cursor-pointer transition"><i class="fa-solid fa-magnifying-glass"></i> Matter Registry</div>
+                    <div v-if="role !== 'collector'" @click="view = 'campaigns'" :class="view === 'campaigns' ? 'sidebar-active' : ''" class="px-4 py-3 rounded-lg flex items-center gap-3 cursor-pointer text-amber-500"><i class="fa-solid fa-flag"></i> Campaigns</div>
+                    <div v-if="role !== 'collector'" @click="view = 'allocations'" :class="view === 'allocations' ? 'sidebar-active' : ''" class="px-4 py-3 rounded-lg flex items-center gap-3 cursor-pointer text-blue-400"><i class="fa-solid fa-user-tag"></i> Allocations</div>
                 </nav>
 
-                <button @click="logout" class="text-slate-600 hover:text-red-500 font-bold text-[10px] uppercase flex items-center gap-2 pt-6 border-t border-blue-900/20 transition"><i class="fa-solid fa-power-off"></i> Terminate</button>
+                <div class="bg-slate-900/50 p-4 rounded-3xl mb-6">
+                    <div class="text-[9px] text-slate-500 uppercase font-black mb-1">Current Session</div>
+                    <div class="text-xl font-mono font-bold text-blue-400">{{ statusTimer }}</div>
+                </div>
+
+                <button @click="logout" class="text-slate-600 hover:text-red-500 font-bold text-[10px] uppercase flex items-center gap-2 pt-6 border-t border-blue-900/20"><i class="fa-solid fa-power-off"></i> Terminate</button>
             </aside>
 
-            <!-- Workspace -->
-            <main class="flex-1 flex flex-col min-w-0 bg-[#f1f5f9] text-slate-900 overflow-hidden relative">
-                <header class="h-16 header-blue flex items-center justify-between px-8 shrink-0 shadow-lg">
-                    <div class="flex items-center gap-6 text-white font-800 uppercase italic">
-                        <i class="fa-solid fa-bars"></i> Mafanyolle Finance
+            <!-- Main Work Area -->
+            <main class="flex-1 flex flex-col min-w-0 bg-slate-950/20">
+                <header class="h-24 glass flex items-center justify-between px-10 border-b border-blue-900/30">
+                    <div class="flex flex-col">
+                        <div class="text-[9px] font-black text-blue-500 uppercase tracking-widest">Department Workspace</div>
+                        <div class="text-xl font-800 uppercase text-white">{{ view }} Center</div>
                     </div>
                     <div class="flex items-center gap-10">
-                        <div class="text-right text-white">
-                            <div class="text-[9px] font-black uppercase text-blue-300">Portfolio Recaptured</div>
-                            <div class="text-xl font-bold font-mono">R {{ formatMoney(totalCollected) }}</div>
+                        <div class="text-right">
+                            <div class="text-[9px] font-black text-slate-500 uppercase">System Recapture (R)</div>
+                            <div class="text-xl font-bold font-mono text-emerald-400">R {{ formatMoney(totalCollected) }}</div>
                         </div>
-                        <button v-if="role !== 'collector'" @click="showAdd = true" class="bg-white text-[#002d5b] px-4 py-1.5 rounded font-black text-[10px] uppercase shadow-xl">+ Load Intake</button>
+                        <button v-if="role !== 'collector'" @click="showAdd = true" class="bg-blue-600 text-white px-6 py-3 rounded-xl font-black text-[10px] uppercase shadow-2xl hover:bg-white hover:text-black transition">+ New Instruction</button>
                     </div>
                 </header>
 
-                <!-- VIEW: WORK STATION (ONE MATTER SEARCH) -->
+                <!-- VIEW: WORK (RETAINED & IMPROVED) -->
                 <div v-if="view === 'work'" class="flex-1 flex flex-col p-6 overflow-hidden">
                     <div v-if="!activeCase" class="flex-1 flex flex-col items-center justify-center opacity-20">
-                        <i class="fa-solid fa-folder-tree text-9xl text-slate-400 mb-6"></i>
-                        <h2 class="text-2xl font-800 uppercase tracking-widest">Search a matter number to begin</h2>
-                        <input v-model="searchQuery" @keyup.enter="searchMatter" class="mt-8 p-6 w-full max-w-lg bg-white border border-slate-300 rounded-full shadow-2xl outline-none text-center text-xl italic" placeholder="Enter Reference...">
+                        <i class="fa-solid fa-search text-9xl mb-6"></i>
+                        <input v-model="searchQuery" @keyup.enter="searchMatter" class="p-6 w-full max-w-lg bg-white border border-slate-300 rounded-full text-center text-xl text-black italic outline-none" placeholder="Enter Ref / Matter Number...">
                     </div>
 
-                    <!-- FOCUSED MATTER (Screenshot 1 Layout) -->
-                    <div v-else class="flex-1 flex flex-col overflow-hidden animate-in slide-in-from-bottom duration-500 bg-[#f8fafc]">
-                        <!-- Top Strip -->
-                        <div class="bg-white p-6 border-b-2 border-blue-600 flex justify-between items-center">
+                    <div v-else class="flex-1 flex flex-col overflow-hidden animate-in slide-in-from-bottom duration-500">
+                        <!-- TOP DEBTOR STRIP -->
+                        <div class="bg-white p-6 border-b-2 border-blue-600 flex justify-between items-center text-slate-900">
                             <div class="flex items-center gap-6">
                                 <div class="w-12 h-12 bg-amber-500 rounded-full flex items-center justify-center text-white"><i class="fa-solid fa-user"></i></div>
                                 <div>
-                                    <h2 class="text-xl font-bold uppercase text-slate-800">{{ activeCase.name }}</h2>
-                                    <div class="text-[10px] font-black text-slate-400 uppercase tracking-widest">{{ activeCase.id_number }} (ME)</div>
+                                    <h2 class="text-xl font-black uppercase tracking-tighter">{{ activeCase.name }}</h2>
+                                    <div class="text-[10px] font-black text-slate-400 uppercase tracking-widest">ID: {{ activeCase.id_number }} | Ref: {{ activeCase.ref_number }}</div>
                                 </div>
                             </div>
-                            <div class="text-right">
-                                <div class="text-[11px] font-bold text-slate-400 uppercase">Total Arrears:</div>
-                                <div class="text-2xl font-black text-slate-800">R {{ formatMoney(activeCase.total_debt) }}</div>
+                            <div class="flex gap-10">
+                                <div class="text-center"><p class="text-[9px] font-black text-slate-400 uppercase">Liability</p><p class="text-xl font-black">R {{ formatMoney(activeCase.total_debt) }}</p></div>
+                                <div class="text-center"><p class="text-[9px] font-black text-slate-400 uppercase">Collected</p><p class="text-xl font-black text-emerald-600">R {{ formatMoney(activeCase.collected_amount) }}</p></div>
                             </div>
                         </div>
 
-                        <!-- Accordion Work Split -->
-                        <div class="flex-1 flex overflow-hidden">
-                            <div class="w-3/4 overflow-y-auto bg-[#eef2f6] border-r">
-                                <div class="w-full bg-[#0070c0] text-white p-3 font-black text-center text-xl uppercase tracking-[0.3em]">Verify File</div>
-                                
-                                <div class="p-6">
-                                    <div class="bg-white border rounded shadow-sm overflow-hidden mb-4">
-                                        <div class="accordion-item flex justify-between" @click="uiTab = 'details'"><span><i class="fa-solid fa-address-card mr-2 text-blue-500"></i> Contact Details</span><i class="fa-solid fa-chevron-down"></i></div>
-                                        <div v-if="uiTab === 'details'" class="p-6 grid grid-cols-3 gap-6 bg-slate-50 animate-in fade-in">
-                                            <div><label class="text-[9px] font-bold text-slate-400 block uppercase">Phone Number</label><div class="font-bold text-blue-700">{{ activeCase.phone }}</div></div>
-                                            <div><label class="text-[9px] font-bold text-slate-400 block uppercase">Matter Ref</label><div class="font-bold">{{ activeCase.ref_number }}</div></div>
-                                            <div><label class="text-[9px] font-bold text-slate-400 block uppercase">Tax Type</label><div class="font-bold text-emerald-600">{{ activeCase.tax_type }}</div></div>
-                                        </div>
-
-                                        <div class="accordion-item flex justify-between border-t" @click="uiTab = 'history'"><span><i class="fa-solid fa-clock-rotate-left mr-2 text-blue-500"></i> Action History</span><i class="fa-solid fa-chevron-down"></i></div>
-                                        <div v-if="uiTab === 'history'" class="p-6 bg-slate-50 animate-in fade-in space-y-4">
-                                            <div v-for="log in (activeCase.work_history || []).slice().reverse()" class="border-l-4 border-blue-500 p-3 bg-white shadow-sm">
-                                                <div class="flex justify-between text-[9px] font-black text-slate-400 uppercase mb-1"><span>{{ log.agent }}</span><span>{{ log.date }}</span></div>
-                                                <p class="text-[11px] font-medium text-slate-700 italic">"{{ log.note }}"</p>
-                                            </div>
-                                        </div>
-
-                                        <div class="accordion-item flex justify-between border-t" @click="uiTab = 'docs'"><span><i class="fa-solid fa-file-pdf mr-2 text-red-500"></i> Documents</span><i class="fa-solid fa-chevron-down"></i></div>
-                                        <div v-if="uiTab === 'docs'" class="p-6 bg-slate-50 animate-in fade-in grid grid-cols-2 gap-4">
-                                            <div v-for="doc in activeCase.documents" class="flex justify-between items-center p-3 bg-white border rounded">
-                                                <span class="text-[10px] font-bold uppercase">{{ doc.name }}</span>
-                                                <a :href="doc.url" target="_blank" class="text-blue-600"><i class="fa-solid fa-download"></i></a>
-                                            </div>
-                                        </div>
+                        <!-- WORK STATION BODY -->
+                        <div class="flex-1 flex overflow-hidden bg-[#eef2f6]">
+                            <!-- Audit History -->
+                            <div class="w-3/4 overflow-y-auto p-6 space-y-4">
+                                <div class="bg-[#0070c0] text-white p-3 font-black uppercase text-center tracking-widest">Verify and Action</div>
+                                <div class="bg-white rounded border p-6 text-slate-900">
+                                    <h3 class="text-xs font-black uppercase border-b pb-2 mb-4 text-blue-900">Communication Audit Trail</h3>
+                                    <div v-for="log in (activeCase.work_history || []).slice().reverse()" class="mb-4 border-l-4 border-blue-500 bg-slate-50 p-3">
+                                        <div class="flex justify-between text-[9px] font-black text-slate-400 uppercase"><span>Agent: {{ log.agent }}</span><span>{{ log.date }}</span></div>
+                                        <p class="text-[11px] font-medium text-slate-800 italic">Outcome: {{ log.outcome }} - {{ log.note }}</p>
                                     </div>
                                 </div>
                             </div>
 
-                            <!-- Right Telephony Side -->
-                            <div class="w-1/4 bg-white p-6 shadow-2xl flex flex-col">
-                                <div class="bg-slate-900 text-white p-6 rounded-3xl mb-8 text-center shadow-inner relative overflow-hidden">
-                                    <div class="text-[9px] font-black uppercase text-slate-500 mb-2">Internal Telephony</div>
+                            <!-- Telephony Control -->
+                            <div class="w-1/4 glass border-l border-blue-900/20 p-6 flex flex-col bg-white">
+                                <div class="bg-slate-900 text-white p-6 rounded-3xl mb-8 text-center">
+                                    <div class="text-[9px] font-black uppercase text-slate-500 mb-2">Telephony Hub</div>
                                     <div class="text-2xl font-mono font-bold tracking-tighter mb-4">{{ activeCase.phone }}</div>
-                                    <div v-if="onCall" class="text-xl text-emerald-400 font-bold mb-4 animate-pulse">{{ talkTimer }}</div>
-                                    <button v-if="!onCall" @click="startCall" class="w-16 h-16 bg-emerald-500 rounded-full shadow-lg text-white text-2xl transition hover:scale-110"><i class="fa-solid fa-phone"></i></button>
-                                    <button v-else @click="endCall" class="w-16 h-16 bg-red-500 rounded-full shadow-lg text-white text-2xl animate-pulse"><i class="fa-solid fa-phone-slash"></i></button>
+                                    <button class="w-16 h-16 bg-emerald-600 rounded-full text-white text-2xl shadow-xl hover:scale-110 transition"><i class="fa-solid fa-phone"></i></button>
                                 </div>
-                                <button @click="showWrapModal = true" class="w-full btn-action shadow-lg hover:bg-slate-900 transition">Log Action</button>
-                                <button @click="activeCase = null" class="w-full text-slate-400 font-bold uppercase text-[9px] mt-6">Return to Search</button>
+                                <button @click="showWrap = true" class="w-full btn-action shadow-lg">Log Interaction</button>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- MONITORING VIEW -->
-                <div v-if="view === 'monitoring'" class="flex-1 overflow-y-auto p-10 animate-in slide-in-from-right text-white">
-                    <div class="grid grid-cols-4 gap-6">
-                        <div v-for="agent in agentList" :key="agent.id" class="glass p-6 rounded-[30px] border-t-4" :class="isAgentOffline(agent.last_heartbeat) ? 'border-slate-800' : (agent.is_on_call ? 'border-red-600 pulse-red' : 'border-emerald-600')">
-                            <div class="flex justify-between items-center mb-4 text-[9px] font-black uppercase tracking-widest">
-                                <span>{{ isAgentOffline(agent.last_heartbeat) ? 'Offline' : agent.current_status }}</span>
-                                <div v-if="agent.is_on_call" class="text-red-500 animate-pulse italic">IN CALL</div>
-                            </div>
-                            <div class="font-black text-white text-lg tracking-tighter uppercase mb-4">{{ agent.email.split('@')[0] }}</div>
-                            <div class="text-[8px] text-slate-500 font-bold uppercase mb-1">Recovered (ZAR)</div>
-                            <div class="text-xl font-bold font-mono text-emerald-400 italic">R{{ formatMoney(getAgentTotal(agent.id)) }}</div>
-                        </div>
+                <!-- VIEW: ALLOCATIONS (NEW Phase 2) -->
+                <div v-if="view === 'allocations'" class="flex-1 p-10 overflow-y-auto">
+                    <h2 class="text-3xl font-800 uppercase italic mb-10">Matter Allocation</h2>
+                    <div class="glass rounded-[40px] overflow-hidden border border-blue-900/30">
+                        <table class="w-full text-left">
+                            <thead class="bg-slate-900/80 text-slate-500 text-[10px] font-black uppercase tracking-widest border-b border-blue-900/30">
+                                <tr><th class="p-6">Matter</th><th class="p-6 text-center">Current Collector</th><th class="p-6 text-right">New Allocation</th></tr>
+                            </thead>
+                            <tbody class="divide-y divide-blue-900/10 text-xs">
+                                <tr v-for="d in debtors" :key="d.id">
+                                    <td class="p-6 font-bold uppercase text-white">{{ d.name }}</td>
+                                    <td class="p-6 text-center text-blue-400 font-bold uppercase">{{ getCollectorName(d.user_id) }}</td>
+                                    <td class="p-6 text-right">
+                                        <select @change="allocateMatter(d, $event.target.value)" class="bg-slate-900 border border-slate-700 p-2 rounded text-[10px]">
+                                            <option v-for="a in agentList" :value="a.id" :selected="d.user_id === a.id">{{ a.email }}</option>
+                                        </select>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </main>
         </div>
 
-        <!-- WRAP UP MODAL -->
-        <div v-if="showWrapModal" class="fixed inset-0 bg-black/90 flex items-center justify-center p-4 z-[500]">
-            <div class="bg-white w-full max-w-lg p-10 rounded shadow-2xl border-t-8 border-blue-600 text-slate-900">
-                <h2 class="text-2xl font-800 uppercase mb-8 text-blue-900 italic">Capture Interaction</h2>
-                <div class="space-y-6">
-                    <div>
-                        <label class="text-[10px] font-black text-slate-400 uppercase block mb-1">Outcome</label>
-                        <select v-model="workForm.outcome" class="w-full p-4 bg-slate-50 border rounded text-sm font-bold">
-                            <option value="PTP">Promise to Pay (PTP)</option>
-                            <option value="REFUSAL">Refusal to Pay</option>
-                            <option value="DECEASED">Deceased - Upload Certificate</option>
-                            <option value="INTERNAL_NOTE">Internal Note</option>
-                            <option v-if="role !== 'collector'" value="PYMT_RCVD">★ Supervisor: Process Payment</option>
-                        </select>
-                    </div>
-
-                    <div v-if="workForm.outcome === 'PTP'"><label class="text-[10px] font-black text-slate-400 uppercase block mb-1">PTP Date</label><input v-model="workForm.dueDate" type="date" class="w-full p-4 bg-slate-50 border rounded"></div>
-
-                    <div v-if="workForm.outcome === 'PYMT_RCVD'" class="grid grid-cols-2 gap-4">
-                        <select v-model="workForm.allocatedCollector" class="p-4 bg-slate-50 border rounded text-xs font-bold"><option v-for="a in agentList" :value="a.id">{{ a.email }}</option></select>
-                        <input v-model="workForm.paymentAmount" type="number" placeholder="R Amount" class="p-4 bg-slate-50 border rounded font-mono outline-none">
-                    </div>
-
-                    <div class="p-4 bg-blue-50 rounded border border-dashed border-blue-200">
-                        <label class="text-[9px] font-black text-blue-500 uppercase block mb-2 italic">Attach Evidence (PoP/Death Cert)</label>
-                        <input type="file" @change="uploadDoc" class="text-[10px]">
-                    </div>
-
-                    <textarea v-model="workForm.note" class="w-full p-4 bg-slate-50 border rounded italic text-sm" placeholder="Conversation details..."></textarea>
-                    <button @click="submitWork" class="w-full btn-action p-5 rounded shadow-xl tracking-[0.2em]">Submit Comment</button>
-                    <button @click="showWrapModal = false" class="w-full text-[10px] font-black text-slate-300 uppercase mt-4">Close Without Saving</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- INTAKE MODAL -->
-        <div v-if="showAdd" class="fixed inset-0 bg-black/95 flex items-center justify-center p-4 z-[600]">
-            <div class="glass p-12 rounded-[50px] w-full max-w-2xl border-t-8 border-blue-600 shadow-2xl">
+        <!-- MODAL: ADD INTAKE (RETAINED & FIXED) -->
+        <div v-if="showAdd" class="fixed inset-0 bg-black/95 backdrop-blur-xl flex items-center justify-center p-4 z-[110]">
+            <div class="glass p-12 rounded-[60px] w-full max-w-2xl border-t-8 border-blue-600 shadow-2xl">
                 <h2 class="text-3xl font-800 text-white uppercase tracking-tighter mb-10 italic">Case Intake Instruction</h2>
-                <div class="grid grid-cols-2 gap-6 mb-10">
-                    <input v-for="(f,k) in addForm" v-model="addForm[k]" :placeholder="k.replace('_',' ').toUpperCase()" class="bg-slate-900 border border-slate-700 p-4 rounded-xl text-xs text-white outline-none">
+                <div class="grid grid-cols-2 gap-6 mb-12 text-left">
+                    <div><label class="text-[9px] font-black text-slate-500 uppercase block mb-1">Matter Name</label><input v-model="addForm.name" class="bg-slate-900 border border-slate-700 p-4 rounded-xl text-xs text-white w-full outline-none"></div>
+                    <div><label class="text-[9px] font-black text-slate-500 uppercase block mb-1">Reference</label><input v-model="addForm.ref_number" class="bg-slate-900 border border-slate-700 p-4 rounded-xl text-xs text-white w-full outline-none"></div>
+                    <div><label class="text-[9px] font-black text-slate-500 uppercase block mb-1">Liability (R)</label><input v-model="addForm.total_debt" type="number" class="bg-slate-900 border border-slate-700 p-4 rounded-xl text-xs text-white w-full outline-none"></div>
+                    <div><label class="text-[9px] font-black text-slate-500 uppercase block mb-1">Contact Phone</label><input v-model="addForm.phone" class="bg-slate-900 border border-slate-700 p-4 rounded-xl text-xs text-white w-full outline-none"></div>
                 </div>
                 <div class="flex gap-4">
-                    <button @click="saveDebtor" class="flex-1 bg-blue-600 p-5 rounded-2xl font-black text-[10px] uppercase shadow-lg">Capture Matter</button>
-                    <button @click="showAdd = false" class="flex-1 bg-slate-800 text-slate-500 p-5 rounded-2xl font-black text-[10px] uppercase">Abort</button>
+                    <button @click="saveDebtor" class="flex-1 bg-blue-600 p-5 rounded-2xl font-black text-[10px] uppercase shadow-lg hover:bg-white hover:text-black transition">Capture Matter</button>
+                    <button @click="showAdd = false" class="flex-1 bg-slate-800 text-slate-500 p-5 rounded-2xl font-black text-[10px] uppercase transition">Abort</button>
                 </div>
             </div>
         </div>
@@ -228,78 +175,45 @@
         Vue.createApp({
             data() {
                 return {
-                    user: null, role: 'collector', loginEmail: '', view: 'dashboard', uiTab: 'details',
-                    debtors: [], agentList: [], searchQuery: '', showAdd: false, activeCase: null, showWrapModal: false,
-                    addForm: { name: '', phone: '', id_number: '', ref_number: '', book_name: '', total_debt: 0 },
-                    workForm: { outcome: 'INT_NOTE', note: '', dueDate: '', paymentAmount: 0, allocatedCollector: '' },
-                    onCall: false, talkSeconds: 0, talkTimer: '00:00', talkInterval: null,
-                    agentStatus: 'Ready', statusTimer: '00:00:00', statusSeconds: 0, timerInterval: null,
-                    unreadCount: 0
+                    user: null, role: 'collector', loginEmail: '', view: 'work',
+                    debtors: [], agentList: [], searchQuery: '', showAdd: false, activeCase: null,
+                    addForm: { name: '', ref_number: '', total_debt: 0, phone: '', id_number: '', book_name: '' },
+                    agentStatus: 'Ready', statusTimer: '00:00:00', statusSeconds: 0, timerInterval: null
                 }
-            },
-            computed: {
-                totalCollected() { return this.debtors.reduce((s, d) => s + parseFloat(d.collected_amount || 0), 0); },
-                overdueCount() { return this.debtors.filter(d => d.last_outcome === 'PTP').length; }
             },
             async mounted() {
                 const { data: { session } } = await client.auth.getSession();
                 if (session) { 
                     this.user = session.user;
                     const { data: prof } = await client.from('profiles').select('*').eq('id', this.user.id).single();
-                    this.role = prof ? prof.role : 'collector';
+                    this.role = prof?.role || 'collector';
                     this.startTimer(); this.load(); this.loadAgentList();
-                    setInterval(() => this.updateHeartbeat(), 15000);
                 }
             },
             methods: {
                 formatMoney(v) { return parseFloat(v||0).toLocaleString('en-ZA', { minimumFractionDigits: 2 }); },
-                getAgentTotal(id) { return this.debtors.filter(d => d.user_id === id).reduce((s, d) => s + parseFloat(d.collected_amount || 0), 0); },
-                isAgentOffline(hb) { if(!hb) return true; return (new Date() - new Date(hb)) / 1000 > 45; },
+                getCollectorName(id) { const a = this.agentList.find(x => x.id === id); return a ? a.email.split('@')[0] : 'POOL'; },
                 async login() {
-                    const pass = prompt("Enter Password:");
+                    const pass = prompt("SECURE ACCESS REQUIRED");
                     const { data, error } = await client.auth.signInWithPassword({ email: this.loginEmail, password: pass });
                     if (error) alert("Denied"); else window.location.reload();
                 },
-                async logout() { await client.from('profiles').update({ current_status: 'Offline' }).eq('id', this.user.id); await client.auth.signOut(); window.location.reload(); },
+                async logout() { await client.auth.signOut(); window.location.reload(); },
                 async load() { const { data } = await client.from('debtors').select('*'); this.debtors = data || []; },
                 async loadAgentList() { const { data } = await client.from('profiles').select('*'); this.agentList = data || []; },
-                async updateHeartbeat() { await client.from('profiles').update({ current_status: this.agentStatus, is_on_call: this.onCall, last_heartbeat: new Date() }).eq('id', this.user.id); },
                 async searchMatter() {
                     const { data } = await client.from('debtors').select('*').eq('ref_number', this.searchQuery).single();
-                    if(data) this.activeCase = data; else alert("Reference Number not found.");
+                    if(data) this.activeCase = data; else alert("Matter not found.");
+                },
+                async allocateMatter(debtor, newAgentId) {
+                    await client.from('debtors').update({ user_id: newAgentId }).eq('id', debtor.id);
+                    await client.from('audit_logs').insert([{ actor_id: this.user.id, action: 'ALLOCATION', matter_id: debtor.id, new_value: { user_id: newAgentId } }]);
+                    this.load();
                 },
                 startTimer() { this.statusSeconds = 0; setInterval(() => { this.statusSeconds++; this.statusTimer = new Date(this.statusSeconds * 1000).toISOString().substr(11, 8); }, 1000); },
-                startCall() {
-                    document.getElementById('ringing').play(); this.onCall = true; this.talkSeconds = 0;
-                    this.talkInterval = setInterval(() => { this.talkSeconds++; this.talkTimer = Math.floor(this.talkSeconds/60).toString().padStart(2,'0') + ':' + (this.talkSeconds%60).toString().padStart(2,'0'); }, 1000);
-                },
-                endCall() { this.onCall = false; clearInterval(this.talkInterval); document.getElementById('ringing').pause(); this.showWrapModal = true; },
-                async uploadDoc(event) {
-                    const file = event.target.files[0]; if(!file) return;
-                    const path = `docs/${this.activeCase.id}/${Date.now()}_${file.name}`;
-                    const { error } = await client.storage.from('legal_docs').upload(path, file);
-                    if(error) return alert(error.message);
-                    const { data: { publicUrl } } = client.storage.from('legal_docs').getPublicUrl(path);
-                    const docs = [...(this.activeCase.documents || []), { name: file.name, url: publicUrl }];
-                    await client.from('debtors').update({ documents: docs }).eq('id', this.activeCase.id);
-                    alert("Evidence Saved."); this.load();
-                },
                 async saveDebtor() { 
-                    await client.from('debtors').insert([{ ...this.addForm, user_id: null }]); 
-                    this.showAdd = false; this.load(); 
-                },
-                async submitWork() {
-                    const log = { date: new Date().toLocaleString('en-ZA'), outcome: this.workForm.outcome, note: this.workForm.note, agent: this.user.email.split('@')[0] };
-                    const history = [...(this.activeCase.work_history || []), log];
-                    let up = { work_history: history, last_outcome: this.workForm.outcome, user_id: this.user.id };
-                    if (this.workForm.outcome === 'PYMT_RCVD') {
-                        up.collected_amount = (parseFloat(this.activeCase.collected_amount)||0) + parseFloat(this.workForm.paymentAmount);
-                        up.total_debt = parseFloat(this.activeCase.total_debt) - parseFloat(this.workForm.paymentAmount);
-                        up.user_id = this.workForm.allocatedCollector;
-                    }
-                    if (this.workForm.outcome === 'PTP') up.due_date = this.workForm.dueDate;
-                    await client.from('debtors').update(up).eq('id', this.activeCase.id);
-                    this.showWrapModal = false; this.activeCase = null; this.load(); this.searchQuery = '';
+                    const { error } = await client.from('debtors').insert([{ ...this.addForm, user_id: null }]); 
+                    if (error) alert(error.message); else { this.showAdd = false; this.load(); }
                 }
             }
         }).mount('#app')
