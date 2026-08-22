@@ -3,21 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mafanyolle Recoveries | Command Center</title>
+    <title>Mafanyolle Recoveries | Team Leader Suite</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=JetBrains+Mono&display=swap');
         body { font-family: 'Outfit', sans-serif; background-color: #020617; color: #f1f5f9; height: 100vh; overflow: hidden; }
         .excalibur-bg {
-            background-image: linear-gradient(rgba(2, 6, 23, 0.93), rgba(2, 6, 23, 0.93)), url('https://images.unsplash.com/photo-1590059516314-5d5179268686?q=80&w=2070&auto=format&fit=crop');
+            background-image: linear-gradient(rgba(2, 6, 23, 0.94), rgba(2, 6, 23, 0.94)), url('https://images.unsplash.com/photo-1590059516314-5d5179268686?q=80&w=2070&auto=format&fit=crop');
             background-size: cover; background-position: center;
         }
-        .glass { background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(59, 130, 246, 0.2); backdrop-filter: blur(15px); }
+        .glass { background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(59, 130, 246, 0.2); backdrop-filter: blur(20px); }
         .sidebar-active { background: rgba(59, 130, 246, 0.2); border-left: 4px solid #3b82f6; color: white; }
-        .pulse-red { box-shadow: 0 0 15px #ef4444; border: 2px solid #ef4444; }
+        .pulse-red { box-shadow: 0 0 20px #ef4444; border: 2px solid #ef4444; }
         [v-cloak] { display: none; }
     </style>
 </head>
@@ -27,7 +27,7 @@
         <div v-if="!user" class="min-h-screen flex items-center justify-center p-4">
             <div class="glass p-12 rounded-[50px] w-full max-w-md text-center border-t-4 border-blue-600 shadow-2xl">
                 <i class="fa-solid fa-sword text-blue-500 text-5xl mb-6"></i>
-                <h1 class="text-3xl font-800 tracking-tighter text-white uppercase mb-8 italic">Mafanyolle<br>Recoveries</h1>
+                <h1 class="text-3xl font-800 tracking-tighter text-white uppercase mb-10 italic">Mafanyolle<br>Recoveries</h1>
                 <input v-model="loginEmail" type="email" placeholder="Collector ID" class="w-full p-4 bg-slate-900 border border-slate-700 rounded-2xl mb-4 text-white text-center outline-none">
                 <button @click="login" class="w-full bg-blue-600 hover:bg-blue-500 p-5 rounded-2xl font-bold uppercase tracking-widest text-xs transition">Unlock Terminal</button>
             </div>
@@ -39,13 +39,13 @@
             <aside class="w-72 glass border-r border-blue-900/30 flex flex-col p-8">
                 <div class="mb-10">
                     <div class="text-blue-500 font-black text-[10px] uppercase tracking-widest mb-1 italic">Mafanyolle Recoveries</div>
-                    <div class="text-xl font-800 text-white uppercase tracking-tighter italic">Command Center</div>
+                    <div class="text-xl font-800 text-white uppercase tracking-tighter italic leading-none">Excalibur Suite</div>
                     <div class="mt-2"><span class="bg-blue-600 px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest">{{ role }}</span></div>
                 </div>
 
-                <!-- CLOCK IN / STATUS TRACKER -->
+                <!-- AGENT SHIFT STATUS -->
                 <div class="bg-slate-950/50 p-5 rounded-3xl border border-blue-900/30 mb-8">
-                    <label class="text-[9px] font-black text-slate-500 uppercase block mb-3">Agent Status</label>
+                    <label class="text-[9px] font-black text-slate-500 uppercase block mb-3">Shift Control</label>
                     <select v-model="agentStatus" @change="updateStatus" class="w-full bg-slate-900 border border-slate-700 p-3 rounded-xl text-xs font-bold outline-none mb-4" :class="agentStatus === 'Ready' ? 'text-emerald-400' : 'text-amber-400'">
                         <option value="Ready">🟢 Ready</option>
                         <option value="Lunch">🍕 Lunch</option>
@@ -58,60 +58,57 @@
 
                 <nav class="flex-1 space-y-4 uppercase text-[10px] font-bold tracking-[0.2em]">
                     <div @click="view = 'ledger'" :class="view === 'ledger' ? 'sidebar-active text-white' : 'text-slate-500'" class="px-4 py-3 rounded-r-lg flex items-center gap-3 cursor-pointer"><i class="fa-solid fa-vault"></i> Ledger</div>
-                    <div v-if="role === 'supervisor'" @click="view = 'monitoring'" :class="view === 'command' ? 'sidebar-active text-white' : 'text-slate-500'" class="px-4 py-3 rounded-r-lg flex items-center gap-3 cursor-pointer text-blue-400"><i class="fa-solid fa-tower-broadcast"></i> Live Monitoring</div>
+                    <div v-if="role === 'supervisor'" @click="view = 'monitoring'" :class="view === 'monitoring' ? 'sidebar-active text-white' : 'text-slate-500'" class="px-4 py-3 rounded-r-lg flex items-center gap-3 cursor-pointer text-blue-400"><i class="fa-solid fa-tower-broadcast"></i> Team Monitor</div>
                 </nav>
 
                 <button @click="logout" class="text-slate-600 hover:text-red-500 font-bold text-[10px] uppercase flex items-center gap-2 pt-6 border-t border-blue-900/20"><i class="fa-solid fa-power-off"></i> Terminate</button>
             </aside>
 
-            <!-- Main Work Area -->
+            <!-- Main Workspace -->
             <main class="flex-1 flex flex-col min-w-0 overflow-hidden relative">
                 <header class="h-24 glass flex items-center justify-between px-10 border-b border-blue-900/30">
                     <div class="flex items-center gap-4 flex-1">
                         <i class="fa-solid fa-search text-blue-500"></i>
-                        <input v-model="search" type="text" placeholder="Search Master Ledger..." class="bg-transparent outline-none w-full max-w-lg text-sm text-white italic">
+                        <input v-model="search" type="text" placeholder="Search accounts..." class="bg-transparent outline-none w-full max-w-lg text-sm text-white italic">
                     </div>
-                    <div class="flex items-center gap-8">
+                    <div class="flex items-center gap-10">
                         <div class="text-right">
-                            <div class="text-[9px] font-black text-slate-500 uppercase tracking-widest italic italic">System Recovered (R)</div>
-                            <div class="text-xl font-bold font-mono text-emerald-400">R {{ formatMoney(totalCollected) }}</div>
+                            <div class="text-[9px] font-black text-slate-500 uppercase tracking-widest italic">{{ role === 'supervisor' ? 'Team' : 'Your' }} Collection</div>
+                            <div class="text-xl font-bold font-mono text-emerald-400 italic">R {{ formatMoney(totalCollected) }}</div>
                         </div>
                         <button @click="showAdd = true" class="bg-blue-600 text-white px-6 py-3 rounded-xl font-black text-[10px] uppercase shadow-2xl">+ New Case</button>
                     </div>
                 </header>
 
                 <!-- VIEW: LEDGER -->
-                <div v-if="view === 'ledger'" class="flex-1 overflow-y-auto p-10 animate-in fade-in duration-500">
+                <div v-if="view === 'ledger'" class="flex-1 overflow-y-auto p-10">
                     <div class="grid grid-cols-3 gap-8 mb-10 text-center uppercase tracking-widest font-black italic">
                         <div class="glass p-6 rounded-[30px] border-l-4 border-l-blue-600">
                             <div class="text-[9px] text-slate-500 mb-2">Book Value</div>
-                            <div class="text-2xl font-mono text-white">R{{ formatMoney(totalDebt) }}</div>
+                            <div class="text-2xl font-mono text-white tracking-tighter italic">R{{ formatMoney(totalDebt) }}</div>
                         </div>
                         <div class="glass p-6 rounded-[30px] border-l-4 border-l-emerald-500">
-                            <div class="text-[9px] text-emerald-500 mb-2">Collections</div>
-                            <div class="text-2xl font-mono text-emerald-500">R{{ formatMoney(totalCollected) }}</div>
+                            <div class="text-[9px] text-emerald-500 mb-2 italic">Recovered</div>
+                            <div class="text-2xl font-mono text-emerald-500 tracking-tighter">R{{ formatMoney(totalCollected) }}</div>
                         </div>
                         <div class="glass p-6 rounded-[30px] border-l-4 border-l-red-600">
-                            <div class="text-[9px] text-red-500 mb-2">PTP Breaches</div>
-                            <div class="text-2xl font-mono text-red-500">R{{ formatMoney(overdueDebt) }}</div>
+                            <div class="text-[9px] text-red-500 mb-2">Breaches</div>
+                            <div class="text-2xl font-mono text-red-500 tracking-tighter italic">R{{ formatMoney(overdueDebt) }}</div>
                         </div>
                     </div>
 
                     <div class="glass rounded-[40px] overflow-hidden border border-blue-900/30">
                         <table class="w-full text-left">
                             <thead class="bg-slate-900/80 text-slate-500 text-[10px] font-black uppercase border-b border-blue-900/30">
-                                <tr><th class="p-6">Matter</th><th class="p-6">Reference</th><th class="p-6">Liability</th><th class="p-6">Collected</th><th class="p-6 text-center">Status</th><th class="p-6 text-right">Telephony</th></tr>
+                                <tr><th class="p-6">Matter</th><th class="p-6">Reference</th><th class="p-6">Liability</th><th class="p-6">Collected</th><th class="p-6">Collector</th><th class="p-6 text-right">Telephony</th></tr>
                             </thead>
                             <tbody class="divide-y divide-blue-900/10 text-xs">
                                 <tr v-for="d in filteredDebtors" :key="d.id" class="hover:bg-blue-600/5 transition">
-                                    <td class="p-6"><div class="font-bold uppercase text-white">{{ d.name }}</div><div class="text-[9px] text-blue-500 font-bold uppercase tracking-widest italic">{{ d.id_number || '---' }}</div></td>
-                                    <td class="p-6 text-slate-400 font-bold uppercase">{{ d.ref_number || '---' }}</td>
-                                    <td class="p-6 font-mono font-bold text-white tracking-tighter">R {{ formatMoney(d.total_debt) }}</td>
+                                    <td class="p-6 font-bold uppercase text-white tracking-tighter">{{ d.name }}</td>
+                                    <td class="p-6 text-slate-400 font-bold uppercase tracking-widest">{{ d.ref_number || '---' }}</td>
+                                    <td class="p-6 font-mono font-bold text-white tracking-tighter italic">R {{ formatMoney(d.total_debt) }}</td>
                                     <td class="p-6 font-mono font-bold text-emerald-500 tracking-tighter">R {{ formatMoney(d.collected_amount) }}</td>
-                                    <td class="p-6 text-center">
-                                        <span v-if="isOverdue(d.due_date)" class="text-red-500 animate-pulse font-black uppercase">Breach</span>
-                                        <span v-else class="text-slate-600 uppercase font-bold">{{ d.due_date || d.last_outcome || 'NEW' }}</span>
-                                    </td>
+                                    <td class="p-6 font-bold text-blue-400 uppercase text-[9px] italic">{{ getCollectorName(d.user_id) }}</td>
                                     <td class="p-6 text-right space-x-2">
                                         <button @click="initiateCall(d)" class="bg-emerald-600 text-white p-2 rounded-lg"><i class="fa-solid fa-phone text-[10px]"></i></button>
                                         <button @click="workAccount(d)" class="bg-slate-800 hover:bg-white hover:text-black px-3 py-2 rounded-lg font-black text-[9px] uppercase transition">Work</button>
@@ -123,98 +120,98 @@
                 </div>
 
                 <!-- VIEW: LIVE MONITORING (SUPERVISOR ONLY) -->
-                <div v-if="view === 'monitoring' && role === 'supervisor'" class="flex-1 overflow-y-auto p-10 animate-in slide-in-from-right duration-500">
-                    <h2 class="text-3xl font-800 uppercase tracking-tighter mb-10 italic">Live Agent Command Center</h2>
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div v-if="view === 'monitoring' && role === 'supervisor'" class="flex-1 overflow-y-auto p-10">
+                    <h2 class="text-3xl font-800 uppercase tracking-tighter mb-10 italic italic">Team Command Center</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 text-center">
                         <div v-for="agent in agentList" class="glass p-6 rounded-[30px] border-t-4" :class="agent.is_on_call ? 'border-red-600 pulse-red' : 'border-blue-600'">
-                            <div class="flex justify-between items-start mb-4">
-                                <div class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center font-bold">{{ agent.email.charAt(0).toUpperCase() }}</div>
+                            <div class="flex justify-between items-center mb-4">
                                 <span class="text-[9px] font-black uppercase px-2 py-1 rounded" :class="agent.current_status === 'Ready' ? 'bg-emerald-600' : 'bg-amber-600'">{{ agent.current_status }}</span>
+                                <div v-if="agent.is_on_call" class="text-red-500 text-[10px] font-black animate-pulse"><i class="fa-solid fa-headset"></i> CALL</div>
                             </div>
-                            <div class="font-bold text-white mb-1 truncate">{{ agent.email.split('@')[0] }}</div>
-                            <div v-if="agent.is_on_call" class="text-red-500 text-[10px] font-black uppercase animate-pulse italic"><i class="fa-solid fa-headset mr-1"></i> LIVE ON CALL</div>
-                            <div v-else class="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Idle / Waiting</div>
+                            <div class="font-black text-white mb-1 uppercase tracking-tighter">{{ agent.email.split('@')[0] }}</div>
+                            <div class="mt-4 border-t border-blue-900/20 pt-4">
+                                <div class="text-[9px] text-slate-500 font-bold uppercase">Total Collected</div>
+                                <div class="text-xl font-bold font-mono text-emerald-400 italic">R{{ formatMoney(getAgentTotal(agent.id)) }}</div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </main>
         </div>
 
-        <!-- FULL-SCREEN WORK STATION -->
+        <!-- FULL-SCREEN WORK PANEL -->
         <div v-if="activeCase" class="fixed inset-0 bg-slate-950 flex flex-col z-[100] animate-in slide-in-from-bottom duration-300">
             <div class="h-24 glass border-b border-blue-900/30 flex items-center justify-between px-12">
                 <div class="flex items-center gap-10">
-                    <div class="bg-blue-600 px-4 py-1.5 rounded-lg text-[10px] font-black uppercase italic italic">Active Interaction</div>
+                    <div class="bg-blue-600 px-4 py-1.5 rounded-lg text-[10px] font-black tracking-widest uppercase italic shadow-lg">Working Case</div>
                     <h2 class="text-3xl font-800 uppercase text-white tracking-tighter italic italic">{{ activeCase.name }}</h2>
                 </div>
                 <button @click="activeCase = null"><i class="fa-solid fa-circle-xmark text-4xl text-slate-700 hover:text-white transition"></i></button>
             </div>
             <div class="flex-1 flex overflow-hidden">
+                <!-- Audit History -->
                 <div class="w-1/2 p-12 border-r border-blue-900/30 overflow-y-auto bg-black/20">
-                    <h3 class="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-10 border-b border-blue-500/20 pb-4 italic italic">Matter Audit History</h3>
+                    <h3 class="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-10 border-b border-blue-500/20 pb-4 italic">Matter History Logs</h3>
                     <div class="space-y-6">
-                        <div v-for="log in (activeCase.work_history || []).slice().reverse()" class="bg-slate-900/80 p-6 rounded-3xl border border-blue-900/20">
-                            <div class="flex justify-between text-[10px] font-black mb-3 uppercase tracking-widest">
-                                <span class="text-blue-500 bg-blue-900/30 px-2 py-0.5 rounded">{{ log.outcome }}</span>
-                                <span class="text-slate-600 italic italic">{{ log.date }}</span>
+                        <div v-for="log in (activeCase.work_history || []).slice().reverse()" class="glass p-6 rounded-3xl border border-blue-900/20">
+                            <div class="flex justify-between text-[10px] font-black mb-3 uppercase">
+                                <span class="text-blue-500">{{ log.outcome }}</span>
+                                <span class="text-slate-600 italic">{{ log.date }}</span>
                             </div>
-                            <p class="text-sm text-slate-300 italic italic italic">{{ log.note }}</p>
+                            <p class="text-sm text-slate-300 italic">{{ log.note }}</p>
                         </div>
                     </div>
                 </div>
+                <!-- Outcome -->
                 <div class="w-1/2 p-12 space-y-10 overflow-y-auto bg-slate-900/10 flex flex-col">
                     <div class="grid grid-cols-2 gap-8">
                         <div>
-                            <label class="text-[10px] font-black text-slate-500 uppercase block mb-3 italic tracking-widest">Wrap Code</label>
+                            <label class="text-[10px] font-black text-slate-500 uppercase block mb-3 italic">Outcome Wrap-Up</label>
                             <select v-model="workForm.outcome" class="w-full bg-slate-900 border border-blue-900/30 p-5 rounded-2xl text-xs font-bold text-white outline-none">
                                 <option value="PTP">PTP (Promise)</option>
                                 <option value="STAT_REQ">Statement Requested</option>
-                                <option value="REFUSAL">Refuse to Pay</option>
                                 <option value="INT_NOTE">Internal Note</option>
-                                <option v-if="role === 'supervisor'" value="PYMT_RCVD">★ SUPERVISOR: Payment Received</option>
-                                <option v-if="role === 'supervisor'" value="PAID_UP">★ SUPERVISOR: Account Settled</option>
+                                <option value="RTP">Refusal to Pay</option>
+                                <option v-if="role === 'supervisor'" value="PYMT_RCVD">★ SUPERVISOR: Process Payment</option>
                             </select>
                         </div>
                         <div v-if="workForm.outcome === 'PTP' || activeCase.due_date">
-                            <label class="text-[10px] font-black text-slate-500 uppercase block mb-3 italic tracking-widest">Calendar</label>
+                            <label class="text-[10px] font-black text-slate-500 uppercase block mb-3 italic">PTP Date Picker</label>
                             <input v-model="workForm.dueDate" type="date" class="w-full bg-slate-900 border border-blue-900/30 p-5 rounded-2xl text-xs font-bold text-white">
                         </div>
                     </div>
-                    <div v-if="workForm.outcome === 'PYMT_RCVD' && role === 'supervisor'">
-                        <label class="text-[10px] font-black text-emerald-500 uppercase block mb-3 italic tracking-widest">Enter Recaptured R Amount</label>
-                        <input v-model="workForm.paymentAmount" type="number" class="w-full bg-emerald-900/10 border border-emerald-500/30 p-5 rounded-2xl text-lg font-bold text-emerald-400 font-mono outline-none">
+
+                    <!-- SUPERVISOR ALLOCATION LOGIC -->
+                    <div v-if="workForm.outcome === 'PYMT_RCVD' && role === 'supervisor'" class="grid grid-cols-2 gap-8 animate-pulse">
+                        <div>
+                            <label class="text-[10px] font-black text-emerald-500 uppercase block mb-3 italic">Allocate Payment To</label>
+                            <select v-model="workForm.allocatedCollector" class="w-full bg-emerald-900/10 border border-emerald-500/30 p-5 rounded-2xl text-xs font-bold text-white outline-none">
+                                <option v-for="agent in agentList" :value="agent.id">{{ agent.email.split('@')[0] }}</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-black text-emerald-500 uppercase block mb-3 italic">Amount Recaptured (R)</label>
+                            <input v-model="workForm.paymentAmount" type="number" class="w-full bg-emerald-900/10 border border-emerald-500/30 p-5 rounded-2xl text-lg font-bold text-emerald-400 font-mono outline-none">
+                        </div>
                     </div>
-                    <textarea v-model="workForm.note" class="flex-1 bg-slate-900 border border-blue-900/30 p-8 rounded-[30px] text-sm text-white outline-none resize-none italic" placeholder="Capture interaction outcome details..."></textarea>
-                    <button @click="submitWork" class="w-full bg-blue-600 p-8 rounded-3xl font-black uppercase text-xs tracking-widest transition shadow-2xl">Confirm and Update Matter</button>
+
+                    <textarea v-model="workForm.note" class="flex-1 bg-slate-900 border border-blue-900/30 p-8 rounded-[30px] text-sm text-white outline-none resize-none italic" placeholder="Enter collection interaction details..."></textarea>
+                    <button @click="submitWork" class="w-full bg-blue-600 p-8 rounded-3xl font-black uppercase text-xs tracking-[0.4em] transition shadow-2xl hover:bg-white hover:text-black">Commit Record</button>
                 </div>
             </div>
         </div>
 
-        <!-- DIALER (TELEPHONY) -->
-        <aside v-if="dialerVisible" class="w-80 glass fixed right-0 top-24 bottom-0 p-6 flex flex-col z-50">
-            <div class="flex justify-between items-center mb-10"><h3 class="text-[10px] font-black uppercase text-blue-500 italic">Dialer Suite</h3><button @click="dialerVisible = false"><i class="fa-solid fa-xmark text-slate-500"></i></button></div>
-            <div class="bg-black rounded-[40px] p-6 border border-slate-800 mb-8 text-center h-48 flex flex-col justify-center">
-                <div class="text-[10px] uppercase font-bold tracking-widest mb-2" :class="onCall ? 'text-emerald-500 animate-pulse' : 'text-slate-600'">{{ onCall ? 'Line Active' : 'Ready' }}</div>
-                <div class="text-2xl font-black text-white font-mono italic">{{ dialerNumber || '0000000000' }}</div>
-                <div v-if="onCall" class="text-lg font-mono text-emerald-500 font-bold mt-2">{{ callTimer }}</div>
-            </div>
-            <div class="flex justify-center gap-6 mt-auto">
-                <button v-if="!onCall" @click="startCall" class="w-16 h-16 bg-emerald-600 rounded-full flex items-center justify-center text-white text-2xl transition"><i class="fa-solid fa-phone"></i></button>
-                <button v-else @click="endCall" class="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center text-white text-2xl animate-pulse transition"><i class="fa-solid fa-phone-slash"></i></button>
-            </div>
-        </aside>
-
-        <!-- ADD MODAL -->
+        <!-- ADD MODAL (SAME AS BEFORE) -->
         <div v-if="showAdd" class="fixed inset-0 bg-black/95 backdrop-blur-xl flex items-center justify-center p-4 z-[110]">
             <div class="glass p-12 rounded-[60px] w-full max-w-2xl border-t-4 border-blue-600">
-                <h2 class="text-3xl font-800 text-white uppercase tracking-tighter mb-10 italic italic">Case Instruction</h2>
-                <div class="grid grid-cols-2 gap-6 mb-12 text-left">
+                <h2 class="text-3xl font-800 text-white uppercase tracking-tighter mb-10 italic">Case Intake</h2>
+                <div class="grid grid-cols-2 gap-6 mb-12">
                     <div v-for="f in [{l:'Name',k:'name'},{l:'Phone',k:'phone'},{l:'ID Number',k:'id_number'},{l:'Reference',k:'ref_number'},{l:'Portfolio',k:'book_name'},{l:'Liability(R)',k:'total_debt',t:'number'}]">
-                        <label class="text-[9px] font-black text-slate-500 uppercase mb-2 block tracking-widest">{{f.l}}</label>
+                        <label class="text-[9px] font-black text-slate-500 uppercase mb-2 block">{{f.l}}</label>
                         <input v-model="addForm[f.k]" :type="f.t||'text'" class="bg-slate-900 border border-blue-900/20 p-4 rounded-xl text-xs text-white w-full outline-none">
                     </div>
                 </div>
-                <div class="flex gap-4"><button @click="saveDebtor" class="flex-1 bg-blue-600 p-5 rounded-2xl font-black text-[10px] uppercase transition shadow-lg shadow-blue-900/50">Add Matter</button><button @click="showAdd = false" class="flex-1 bg-slate-800 text-slate-500 p-5 rounded-2xl font-black text-[10px] uppercase transition">Cancel</button></div>
+                <div class="flex gap-4"><button @click="saveDebtor" class="flex-1 bg-blue-600 p-5 rounded-2xl font-black text-[10px] uppercase transition shadow-lg">Load Matter</button><button @click="showAdd = false" class="flex-1 bg-slate-800 text-slate-500 p-5 rounded-2xl font-black text-[10px] uppercase transition">Cancel</button></div>
             </div>
         </div>
     </div>
@@ -229,7 +226,7 @@
                 return {
                     user: null, role: 'collector', loginEmail: '', debtors: [], search: '', showAdd: false, activeCase: null, view: 'ledger',
                     agentList: [], addForm: { name: '', id_number: '', phone: '', ref_number: '', book_name: '', total_debt: 0 },
-                    workForm: { outcome: 'INT_NOTE', note: '', dueDate: '', paymentAmount: 0 },
+                    workForm: { outcome: 'INT_NOTE', note: '', dueDate: '', paymentAmount: 0, allocatedCollector: '' },
                     dialerVisible: false, onCall: false, dialerNumber: '', callTimer: '00:00', callInterval: null,
                     agentStatus: 'Ready', statusTimer: '00:00:00', statusSeconds: 0, timerInterval: null
                 }
@@ -240,7 +237,10 @@
                     return this.debtors.filter(d => (d.name||'').toLowerCase().includes(s) || (d.ref_number||'').toLowerCase().includes(s));
                 },
                 totalDebt() { return this.debtors.reduce((s, d) => s + parseFloat(d.total_debt || 0), 0); },
-                totalCollected() { return this.debtors.reduce((s, d) => s + parseFloat(d.collected_amount || 0), 0); },
+                totalCollected() { 
+                    if (this.role === 'supervisor') return this.debtors.reduce((s, d) => s + parseFloat(d.collected_amount || 0), 0);
+                    return this.debtors.filter(d => d.user_id === this.user.id).reduce((s, d) => s + parseFloat(d.collected_amount || 0), 0);
+                },
                 overdueDebt() { return this.debtors.filter(d => this.isOverdue(d.due_date)).reduce((s, d) => s + parseFloat(d.total_debt || 0), 0); }
             },
             async mounted() {
@@ -251,14 +251,16 @@
                     this.role = prof ? prof.role : 'collector';
                     this.startTimer();
                     this.load(); 
-                    if (this.role === 'supervisor') this.loadAgentList();
-                    setInterval(() => this.heartbeat(), 10000); // 10 second heartbeat
+                    this.loadAgentList();
+                    setInterval(() => this.heartbeat(), 10000);
                 }
             },
             methods: {
                 formatMoney(v) { return parseFloat(v||0).toLocaleString('en-ZA', { minimumFractionDigits: 2 }); },
+                getCollectorName(id) { const a = this.agentList.find(x => x.id === id); return a ? a.email.split('@')[0] : 'UNASSIGNED'; },
+                getAgentTotal(id) { return this.debtors.filter(d => d.user_id === id).reduce((s, d) => s + parseFloat(d.collected_amount || 0), 0); },
                 async login() {
-                    const pass = prompt("SECURE SYSTEM ACCESS: Enter Password");
+                    const pass = prompt("SECURE SYSTEM ACCESS: Enter Intelligence Password");
                     const { data, error } = await client.auth.signInWithPassword({ email: this.loginEmail, password: pass });
                     if (error) alert("Access Denied"); else window.location.reload();
                 },
@@ -272,11 +274,7 @@
                     this.agentList = data || [];
                 },
                 async heartbeat() {
-                    await client.from('profiles').update({ 
-                        current_status: this.agentStatus, 
-                        is_on_call: this.onCall,
-                        last_heartbeat: new Date()
-                    }).eq('id', this.user.id);
+                    await client.from('profiles').update({ current_status: this.agentStatus, is_on_call: this.onCall, last_heartbeat: new Date() }).eq('id', this.user.id);
                     if (this.role === 'supervisor') this.loadAgentList();
                 },
                 startTimer() {
@@ -289,11 +287,7 @@
                         this.statusTimer = `${h}:${m}:${s}`;
                     }, 1000);
                 },
-                async updateStatus() {
-                    this.startTimer();
-                    await client.from('agent_logs').insert([{ user_id: this.user.id, status: this.agentStatus }]);
-                    this.heartbeat();
-                },
+                async updateStatus() { this.startTimer(); this.heartbeat(); },
                 initiateCall(d) { this.dialerVisible = true; this.dialerNumber = d.phone; this.activeCase = d; },
                 startCall() {
                     this.onCall = true; let s = 0; this.heartbeat();
@@ -303,7 +297,10 @@
                     this.onCall = false; clearInterval(this.callInterval); this.heartbeat(); this.workAccount(this.activeCase);
                     this.workForm.note = `Talk Time: ${this.callTimer}. Outcome: `;
                 },
-                workAccount(d) { this.activeCase = d; this.workForm = { outcome: 'INT_NOTE', note: '', dueDate: d.due_date || '', paymentAmount: 0 }; },
+                workAccount(d) { 
+                    this.activeCase = d; 
+                    this.workForm = { outcome: 'INT_NOTE', note: '', dueDate: d.due_date || '', paymentAmount: 0, allocatedCollector: d.user_id }; 
+                },
                 async saveDebtor() {
                     await client.from('debtors').insert([{ ...this.addForm, user_id: this.user.id }]);
                     this.showAdd = false; this.load();
@@ -312,12 +309,13 @@
                     const log = { date: new Date().toLocaleString('en-ZA'), outcome: this.workForm.outcome, note: this.workForm.note };
                     const history = [...(this.activeCase.work_history || []), log];
                     let up = { work_history: history, last_outcome: this.workForm.outcome };
+                    
                     if (this.workForm.outcome === 'PYMT_RCVD' && this.role === 'supervisor') {
                         up.collected_amount = (parseFloat(this.activeCase.collected_amount)||0) + parseFloat(this.workForm.paymentAmount);
                         up.total_debt = parseFloat(this.activeCase.total_debt) - parseFloat(this.workForm.paymentAmount);
+                        up.user_id = this.workForm.allocatedCollector; // Attribute payment to selected collector
                     }
                     if (this.workForm.outcome === 'PTP') up.due_date = this.workForm.dueDate;
-                    if (this.workForm.outcome === 'PAID_UP') { up.total_debt = 0; up.due_date = null; }
                     await client.from('debtors').update(up).eq('id', this.activeCase.id);
                     this.activeCase = null; this.load();
                 },
