@@ -2,175 +2,146 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Mafanyolle Recoveries | Absolute Suite v12</title>
+    <title>Mafanyolle Recoveries | Secure Suite v17</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=JetBrains+Mono&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&display=swap');
         body { font-family: 'Outfit', sans-serif; background-color: #020617; color: #f1f5f9; height: 100vh; overflow: hidden; }
-        .excalibur-bg { background-image: linear-gradient(rgba(2, 6, 23, 0.95), rgba(2, 6, 23, 0.95)), url('https://images.unsplash.com/photo-1554224155-169641357599?q=80&w=2000&auto=format&fit=crop'); background-size: cover; background-position: center; }
+        .excalibur-bg { background-image: linear-gradient(rgba(2, 6, 23, 0.96), rgba(2, 6, 23, 0.96)), url('https://images.unsplash.com/photo-1554224155-169641357599?q=80&w=2000&auto=format&fit=crop'); background-size: cover; background-position: center; }
         .glass { background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(59, 130, 246, 0.2); backdrop-filter: blur(25px); }
         .sidebar-active { background: rgba(59, 130, 246, 0.2); border-left: 4px solid #3b82f6; color: white; }
-        .dial-pad-btn { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); aspect-ratio: 1; border-radius: 50%; font-size: 1.25rem; font-weight: 800; transition: 0.2s; }
-        .dial-pad-btn:hover { background: #3b82f6; transform: scale(1.1); }
+        .pulse-red { box-shadow: 0 0 20px #ef4444; border: 2px solid #ef4444; }
         [v-cloak] { display: none; }
+        .chat-scroll { scroll-behavior: smooth; }
+        input:disabled, button:disabled { opacity: 0.5; cursor: not-allowed; }
     </style>
 </head>
 <body class="excalibur-bg">
     <div id="app" v-cloak class="h-full flex flex-col">
-        <audio id="beep" src="https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3"></audio>
-
-        <!-- LOGIN SCREEN PRESERVED -->
+        
+        <!-- REAL LOGIN FORM (FIXED) -->
         <div v-if="!user" class="min-h-screen flex items-center justify-center p-4">
             <div class="glass p-12 rounded-[50px] w-full max-w-sm text-center border-t-4 border-blue-600 shadow-2xl">
                 <i class="fa-solid fa-sword text-blue-500 text-6xl mb-6"></i>
-                <h1 class="text-3xl font-800 text-white uppercase mb-8 italic italic">Mafanyolle<br>Recoveries</h1>
-                <input v-model="loginEmail" type="email" placeholder="Collector ID" class="w-full p-4 bg-slate-900 border border-slate-700 rounded-2xl mb-4 text-white text-center outline-none">
-                <button @click="login" class="w-full bg-blue-600 hover:bg-blue-500 p-5 rounded-2xl font-bold uppercase text-xs transition">Login</button>
+                <h1 class="text-3xl font-800 text-white uppercase mb-8 italic">Mafanyolle<br>Recoveries</h1>
+                
+                <form @submit.prevent="handleLogin" class="space-y-4">
+                    <input v-model="loginEmail" type="email" placeholder="Email ID" class="w-full p-4 bg-slate-900 border border-slate-700 rounded-2xl text-white outline-none focus:border-blue-500" required>
+                    <input v-model="loginPassword" type="password" placeholder="Password" class="w-full p-4 bg-slate-900 border border-slate-700 rounded-2xl text-white outline-none focus:border-blue-500" required>
+                    <button type="submit" :disabled="loading" class="w-full bg-blue-600 hover:bg-blue-500 p-5 rounded-2xl font-bold uppercase text-xs transition">
+                        <span v-if="loading"><i class="fa-solid fa-circle-notch animate-spin"></i> Authenticating...</span>
+                        <span v-else>Unlock Terminal</span>
+                    </button>
+                    <p v-if="authError" class="text-red-500 text-xs font-bold mt-2">{{ authError }}</p>
+                </form>
             </div>
         </div>
 
-        <!-- MAIN APP -->
+        <!-- MAIN DASHBOARD -->
         <div v-else class="flex flex-1 overflow-hidden">
-            <!-- Sidebar -->
             <aside class="w-72 glass border-r border-blue-900/30 flex flex-col p-8 shrink-0">
                 <div class="mb-6">
                     <div class="text-blue-500 font-black text-[10px] uppercase tracking-widest mb-1 italic">Mafanyolle Recoveries</div>
-                    <div class="text-xl font-800 text-white uppercase tracking-tighter">Command Centre</div>
-                    <div class="mt-2"><span class="bg-blue-600 px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest">{{ role }}</span></div>
+                    <div class="text-xl font-800 text-white uppercase tracking-tighter">Command v17.0</div>
+                    <div class="mt-2"><span class="bg-blue-600 px-2 py-0.5 rounded text-[8px] font-black uppercase">{{ role }}</span></div>
                 </div>
 
                 <nav class="flex-1 space-y-4 uppercase text-[10px] font-bold tracking-widest">
-                    <div @click="view = 'work'" :class="view === 'work' ? 'sidebar-active text-white' : 'text-slate-500'" class="px-4 py-3 rounded-r-lg flex items-center gap-3 cursor-pointer transition"><i class="fa-solid fa-vault"></i> Matter Station</div>
-                    <div @click="view = 'dialer'" :class="view === 'dialer' ? 'sidebar-active text-white' : 'text-slate-500'" class="px-4 py-3 rounded-r-lg flex items-center gap-3 cursor-pointer transition"><i class="fa-solid fa-phone-volume"></i> Dialer</div>
-                    <div @click="view = 'chat'" :class="view === 'chat' ? 'sidebar-active text-white' : 'text-slate-500'" class="px-4 py-3 rounded-r-lg flex items-center gap-3 cursor-pointer relative"><i class="fa-solid fa-comments"></i> Messages <span v-if="unreadCount > 0" class="ml-auto bg-red-600 px-2 py-0.5 rounded-full text-white">{{ unreadCount }}</span></div>
+                    <div @click="view = 'work'" :class="view === 'work' ? 'sidebar-active text-white' : 'text-slate-500'" class="px-4 py-3 rounded-r-lg flex items-center gap-3 cursor-pointer"><i class="fa-solid fa-vault"></i> Matter Ledger</div>
+                    <div @click="view = 'chat'" :class="view === 'chat' ? 'sidebar-active text-white' : 'text-slate-500'" class="px-4 py-3 rounded-r-lg flex items-center gap-3 cursor-pointer relative"><i class="fa-solid fa-comments"></i> Individual Chat <span v-if="unreadCount > 0" class="absolute right-4 w-2 h-2 bg-red-500 rounded-full animate-ping"></span></div>
                     <div v-if="role !== 'collector'" @click="view = 'monitoring'" :class="view === 'monitoring' ? 'sidebar-active text-white' : 'text-slate-500'" class="px-4 py-3 rounded-r-lg flex items-center gap-3 cursor-pointer text-blue-400"><i class="fa-solid fa-tower-broadcast"></i> Live Monitor</div>
                 </nav>
-                <button @click="logout" class="text-slate-600 hover:text-red-500 font-bold text-[10px] uppercase flex items-center gap-2 pt-6 border-t border-blue-900/20 transition"><i class="fa-solid fa-power-off"></i> Terminate</button>
+                <button @click="logout" class="text-slate-600 hover:text-red-500 font-bold text-[10px] uppercase flex items-center gap-2 pt-6 border-t border-blue-900/20"><i class="fa-solid fa-power-off"></i> Logout</button>
             </aside>
 
-            <!-- Main Panel -->
             <main class="flex-1 flex flex-col min-w-0 bg-slate-950/20 overflow-hidden relative">
-                <!-- VIEW: WORK STATION -->
-                <div v-if="view === 'work'" class="flex-1 flex flex-col animate-in fade-in duration-300">
+                <!-- VIEW: WORK STATION (ONE MATTER SEARCH) -->
+                <div v-if="view === 'work'" class="flex-1 flex flex-col">
                     <header class="h-24 glass flex items-center justify-between px-10 border-b border-blue-900/30">
-                        <input v-model="searchQuery" @keyup.enter="searchMatter" placeholder="Enter Reference Number..." class="bg-transparent outline-none w-full max-w-lg text-sm text-white italic tracking-widest">
-                        <div class="flex items-center gap-10">
-                            <div class="text-right">
-                                <div class="text-[9px] font-black text-slate-500 uppercase tracking-widest italic">Recaptured (ZAR)</div>
-                                <div class="text-xl font-bold font-mono text-emerald-400">R {{ formatMoney(totalCollected) }}</div>
-                            </div>
+                        <div class="flex items-center gap-6 flex-1">
+                            <i class="fa-solid fa-search text-blue-500"></i>
+                            <input v-model="searchQuery" @keyup.enter="searchMatter" placeholder="Enter Ref Number (POPIA Audit Active)..." class="bg-transparent outline-none w-full max-w-xl text-sm text-white italic tracking-widest">
                         </div>
                     </header>
 
                     <div v-if="!activeCase" class="flex-1 flex flex-col items-center justify-center opacity-30 italic">
                         <i class="fa-solid fa-search text-9xl mb-6"></i>
-                        <h2 class="text-2xl font-800 uppercase tracking-widest">System Ready. Enter Ref.</h2>
+                        <h2 class="text-2xl font-800 uppercase tracking-widest">Search a matter to begin work.</h2>
                     </div>
-                    <div v-else class="flex-1 flex overflow-hidden">
-                        <div class="w-1/3 p-10 border-r border-blue-900/30 overflow-y-auto bg-black/30">
-                            <h3 class="text-[10px] font-black text-blue-500 uppercase mb-8 border-b border-blue-500/20 pb-4">Matter Audit History</h3>
-                            <div class="space-y-6">
-                                <div v-for="log in (activeCase.work_history || []).slice().reverse()" class="glass p-5 rounded-3xl border border-blue-900/20">
-                                    <div class="flex justify-between text-[8px] font-black uppercase text-blue-500"><span>Agent: {{ log.agent }}</span><span>{{ log.date }}</span></div>
-                                    <p class="text-xs text-slate-400 mt-2 italic">"{{ log.note }}"</p>
+
+                    <div v-else class="flex-1 flex overflow-hidden animate-in fade-in duration-500">
+                        <div class="w-1/3 p-10 border-r border-blue-900/30 overflow-y-auto bg-black/20 text-left">
+                            <h3 class="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-6 italic">History Audit</h3>
+                            <div class="space-y-4">
+                                <div v-for="log in (activeCase.work_history || []).slice().reverse()" class="glass p-4 rounded-2xl border border-blue-900/20">
+                                    <div class="flex justify-between text-[8px] font-black uppercase text-blue-500"><span>{{ log.agent }}</span><span>{{ log.date }}</span></div>
+                                    <p class="text-xs text-white mt-1 italic italic italic">"{{ log.note }}"</p>
                                 </div>
                             </div>
                         </div>
                         <div class="flex-1 flex flex-col p-12 text-left">
+                            <div v-if="activeCase.is_dnc" class="bg-red-600/20 border border-red-600 p-4 rounded-xl mb-6 text-red-500 font-black uppercase text-xs animate-pulse">DO NOT CALL: Customer has requested DNC status.</div>
                             <h2 class="text-5xl font-800 uppercase text-white tracking-tighter italic mb-4">{{ activeCase.name }}</h2>
                             <div class="text-xl font-black font-mono text-blue-400 tracking-tighter mb-10">R {{ formatMoney(activeCase.total_debt) }}</div>
-                            <button @click="openDialerWithNumber(activeCase.phone, activeCase.id)" class="w-32 bg-emerald-600 p-4 rounded-2xl font-black uppercase text-xs shadow-2xl hover:scale-105 transition"><i class="fa-solid fa-phone mr-2"></i> Call</button>
+                            <div class="flex gap-10">
+                                <button @click="initiateTelephony(activeCase)" :disabled="activeCase.is_dnc" class="w-32 bg-emerald-600 p-4 rounded-2xl font-black uppercase text-xs shadow-2xl">Call</button>
+                                <button @click="activeCase = null" class="w-32 bg-slate-800 p-4 rounded-2xl text-slate-500 font-black uppercase text-xs">Close</button>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- VIEW: DIALER (NEW) -->
-                <div v-if="view === 'dialer' || callActive" class="flex-1 flex items-center justify-center p-10 animate-in zoom-in duration-300">
-                    <div class="glass w-full max-w-md p-10 rounded-[60px] border-t-8 border-blue-600 shadow-2xl text-center">
-                        <div class="bg-black rounded-3xl p-6 mb-8 border border-blue-900/30">
-                            <div class="text-[10px] font-bold text-blue-500 uppercase mb-2 tracking-[0.3em]">{{ callStatus }}</div>
-                            <div class="text-3xl font-mono font-bold text-white tracking-tighter">{{ dialerNumber || '0000000000' }}</div>
-                            <div v-if="callActive" class="text-xl font-mono text-emerald-400 mt-4">{{ talkTimer }}</div>
-                        </div>
-
-                        <div class="grid grid-cols-3 gap-4 mb-8 px-4">
-                            <button v-for="key in ['1','2','3','4','5','6','7','8','9','*','0','#']" @click="pressKey(key)" class="dial-pad-btn text-white">{{ key }}</button>
-                        </div>
-
-                        <div class="flex justify-center gap-6">
-                            <button @click="backspace" class="w-16 h-16 dial-pad-btn text-slate-400 text-xl"><i class="fa-solid fa-delete-left"></i></button>
-                            <button v-if="!callActive" @click="initiateCall" class="w-20 h-20 bg-emerald-600 rounded-full text-white text-3xl shadow-xl led-green transition active:scale-95"><i class="fa-solid fa-phone"></i></button>
-                            <button v-else @click="endCall" class="w-20 h-20 bg-red-600 rounded-full text-white text-3xl shadow-xl led-red animate-pulse transition active:scale-95"><i class="fa-solid fa-phone-slash"></i></button>
-                            <button @click="dialerNumber = ''" class="w-16 h-16 dial-pad-btn text-slate-400 text-xl"><i class="fa-solid fa-eraser"></i></button>
+                <!-- VIEW: MONITORING (REPAIRED) -->
+                <div v-if="view === 'monitoring'" class="flex-1 overflow-y-auto p-10">
+                    <h2 class="text-3xl font-800 uppercase text-white italic mb-10">Team Monitor</h2>
+                    <div class="grid grid-cols-4 gap-6">
+                        <div v-for="agent in agentList" :key="agent.id" class="glass p-6 rounded-[30px] border-t-4 border-blue-600">
+                            <div class="font-black text-white text-lg uppercase truncate">{{ agent.email.split('@')[0] }}</div>
+                            <div class="text-[9px] text-slate-500 font-bold uppercase">{{ agent.current_status || 'Offline' }}</div>
                         </div>
                     </div>
                 </div>
 
-                <!-- VIEW: CHAT (REPAIRED) -->
-                <div v-if="view === 'chat'" class="flex-1 flex overflow-hidden animate-in slide-in-from-right duration-300">
+                <!-- VIEW: CHAT (AUTO-SCROLL + READ STATUS) -->
+                <div v-if="view === 'chat'" class="flex-1 flex overflow-hidden">
                     <div class="w-80 glass border-r border-blue-900/30 overflow-y-auto">
                         <div v-for="staff in agentList.filter(a => a.id !== user.id)" @click="openConversation(staff)" class="p-6 border-b border-blue-900/10 cursor-pointer hover:bg-white/5 transition" :class="activeChatAgent?.id === staff.id ? 'bg-blue-600/10' : ''">
-                            <div class="flex justify-between items-center mb-1">
-                                <span class="font-bold text-white uppercase text-xs tracking-tighter">{{ staff.email.split('@')[0] }}</span>
-                                <span class="w-2 h-2 rounded-full" :class="isAgentOffline(staff.last_heartbeat) ? 'bg-slate-700' : 'bg-emerald-500'"></span>
-                            </div>
-                            <div class="text-[9px] text-slate-500 font-bold uppercase tracking-widest">{{ staff.role }}</div>
+                            <span class="font-bold text-white uppercase text-xs">{{ staff.email.split('@')[0] }}</span>
                         </div>
                     </div>
-                    <div class="flex-1 flex flex-col bg-slate-950/20">
+                    <div class="flex-1 flex flex-col">
                         <div v-if="activeChatAgent" class="flex-1 flex flex-col overflow-hidden">
-                            <div class="p-6 border-b border-blue-900/30 font-black uppercase text-xs text-blue-500 italic">Secure Channel: {{ activeChatAgent.email }}</div>
-                            <div class="flex-1 overflow-y-auto p-8 space-y-4" id="chat-container">
-                                <div v-for="m in filteredMessages" :class="m.sender_id === user.id ? 'ml-auto text-right' : ''" class="max-w-[70%]">
-                                    <div :class="m.sender_id === user.id ? 'bg-blue-600/20 border-blue-500/30' : 'bg-slate-800 border-slate-700'" class="p-4 rounded-3xl border text-sm italic text-white shadow-xl">
-                                        {{ m.content }}
-                                    </div>
-                                    <div class="text-[8px] text-slate-600 mt-1 uppercase font-bold">{{ m.created_at.slice(11, 16) }}</div>
+                            <div class="flex-1 overflow-y-auto p-8 space-y-4 chat-scroll" id="chatbox">
+                                <div v-for="m in filteredMessages" :class="m.sender_id === user.id ? 'ml-auto' : ''" class="max-w-[70%]">
+                                    <div :class="m.sender_id === user.id ? 'bg-blue-600/20' : 'bg-slate-800'" class="p-4 rounded-3xl border border-blue-900/30 text-sm text-white shadow-xl">{{ m.content }}</div>
                                 </div>
                             </div>
                             <div class="p-8 bg-slate-950/50 border-t border-blue-900/30 flex gap-4">
-                                <input v-model="chatInput" @keyup.enter="sendChat" placeholder="Type individual message..." class="flex-1 bg-transparent outline-none italic text-sm text-white">
-                                <button @click="sendChat" class="text-blue-500 text-xl hover:scale-110 transition"><i class="fa-solid fa-paper-plane"></i></button>
+                                <input v-model="chatInput" @keyup.enter="sendChat" placeholder="Type message..." class="flex-1 bg-transparent outline-none italic text-sm text-white">
+                                <button @click="sendChat" class="text-blue-500 text-xl"><i class="fa-solid fa-paper-plane"></i></button>
                             </div>
                         </div>
-                        <div v-else class="flex-1 flex items-center justify-center opacity-20 italic">Select staff to start private interaction.</div>
                     </div>
                 </div>
             </main>
         </div>
 
-        <!-- MANDATORY WRAP-UP MODAL -->
+        <!-- WRAP UP (RESETS ON CLOSE) -->
         <div v-if="showWrapModal" class="fixed inset-0 bg-black/98 flex items-center justify-center p-4 z-[200]">
-            <div class="glass w-full max-w-4xl p-12 rounded-[50px] flex flex-col shadow-2xl border-t-8 border-blue-600 text-left">
-                <h2 class="text-3xl font-800 text-white uppercase tracking-tighter mb-10 italic italic">Call Wrap-Up Sequence</h2>
+            <div class="glass w-full max-w-4xl p-12 rounded-[50px] flex flex-col shadow-2xl border-t-8 border-blue-600">
+                <h2 class="text-3xl font-800 text-white uppercase mb-10">Call Wrap-Up</h2>
                 <div class="grid grid-cols-2 gap-10">
-                    <div class="space-y-6">
-                        <label class="text-[10px] font-black text-slate-500 uppercase block mb-1">Outcome Code</label>
-                        <select v-model="workForm.outcome" class="w-full bg-slate-900 border border-blue-900/30 p-5 rounded-2xl text-xs font-bold text-white outline-none">
-                            <option value="COLLECTION">COLLECTION</option>
-                            <option value="PTP">PTP (PROMISE TO PAY)</option>
-                            <option value="BROKEN_PTP">BROKEN PTP</option>
-                            <option value="REFUSED">REFUSED TO PAY</option>
-                            <option value="CALL_BACK">CALL BACK</option>
-                            <option value="DECEASED">DECEASED</option>
-                            <option value="INT_NOTE">INTERNAL NOTE ONLY</option>
-                        </select>
-                        <div v-if="['COLLECTION', 'PTP'].includes(workForm.outcome)">
-                            <label class="text-[10px] font-black text-slate-500 uppercase block mb-3 italic">Amount (R)</label>
-                            <input v-model="workForm.amount" type="number" class="w-full bg-slate-900 border border-blue-900/30 p-5 rounded-2xl text-white outline-none">
-                            <label class="text-[10px] font-black text-slate-500 uppercase block mt-6 mb-3 italic">Due Date</label>
-                            <input v-model="workForm.dueDate" type="date" class="w-full bg-slate-900 border border-blue-900/30 p-5 rounded-2xl text-white outline-none">
-                        </div>
-                    </div>
-                    <div class="flex flex-col">
-                        <label class="text-[10px] font-black text-slate-500 uppercase block mb-3">Call Narrative</label>
-                        <textarea v-model="workForm.note" class="flex-1 bg-slate-900 border border-blue-900/30 p-8 rounded-[30px] text-sm text-white outline-none resize-none italic" placeholder="Capture outcome of call details..."></textarea>
-                    </div>
+                    <select v-model="workForm.outcome" class="w-full bg-slate-900 border border-blue-900/30 p-5 rounded-2xl text-xs text-white">
+                        <option value="PTP">Promise to Pay</option>
+                        <option value="RTP">Refusal to Pay</option>
+                        <option value="DNC">Do Not Call (POPIA)</option>
+                    </select>
+                    <textarea v-model="workForm.note" class="bg-slate-900 border border-blue-900/30 p-8 rounded-[30px] text-sm text-white resize-none"></textarea>
                 </div>
-                <button @click="finalizeCall" class="w-full bg-blue-600 p-8 rounded-3xl font-black uppercase text-xs mt-10 shadow-2xl hover:bg-white hover:text-black transition">Finalize Record</button>
+                <button @click="finalizeCall" class="w-full bg-blue-600 p-8 rounded-3xl font-black uppercase text-xs mt-10">Finalize Matter Record</button>
             </div>
         </div>
     </div>
@@ -183,86 +154,68 @@
         Vue.createApp({
             data() {
                 return {
-                    user: null, role: 'collector', loginEmail: '', debtors: [], searchQuery: '', view: 'work',
-                    activeCase: null, showWrapModal: false, agentList: [],
-                    dialerNumber: '', callActive: false, talkSeconds: 0, talkTimer: '00:00', callStatus: 'READY',
-                    chatInput: '', activeChatAgent: null, messages: [], unreadCount: 0,
+                    user: null, role: 'collector', loginEmail: '', loginPassword: '', loading: false, authError: '',
+                    debtors: [], searchQuery: '', activeCase: null, view: 'work',
+                    messages: [], chatInput: '', activeChatAgent: null, unreadCount: 0,
                     agentStatus: 'Ready', statusTimer: '00:00:00', statusSeconds: 0,
-                    workForm: { outcome: 'INT_NOTE', note: '', amount: 0, dueDate: '' }
-                }
-            },
-            computed: {
-                totalCollected() { return this.debtors.reduce((s, d) => s + parseFloat(d.collected_amount || 0), 0); },
-                filteredMessages() {
-                    if (!this.activeChatAgent) return [];
-                    return this.messages.filter(m => (m.sender_id === this.user.id && m.receiver_id === this.activeChatAgent.id) || (m.sender_id === this.activeChatAgent.id && m.receiver_id === this.user.id));
+                    showWrapModal: false, workForm: { outcome: 'PTP', note: '' },
+                    agentList: []
                 }
             },
             async mounted() {
-                const { data: { session } } = await client.auth.getSession();
-                if (session) { 
-                    this.user = session.user;
-                    const { data: prof } = await client.from('profiles').select('*').eq('id', this.user.id).single();
-                    this.role = prof?.role || 'collector';
-                    this.load(); this.loadStaff(); this.loadMessages();
-                    
-                    // Listeners
-                    client.channel('chat').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (p) => {
-                        this.messages.push(p.new);
-                        if(p.new.receiver_id === this.user.id) { this.unreadCount++; document.getElementById('beep').play(); }
-                    }).subscribe();
-                    
-                    setInterval(() => this.heartbeat(), 10000);
-                    window.addEventListener('keydown', this.handleKeyboard);
-                }
+                client.auth.onAuthStateChange(async (event, session) => {
+                    if (session) {
+                        this.user = session.user;
+                        const { data: prof } = await client.from('profiles').select('*').eq('id', this.user.id).maybeSingle();
+                        this.role = prof?.role || 'collector';
+                        this.load(); this.loadStaff(); this.loadMessages();
+                    } else {
+                        this.user = null;
+                    }
+                });
             },
             methods: {
                 formatMoney(v) { return parseFloat(v||0).toLocaleString('en-ZA', { minimumFractionDigits: 2 }); },
-                async login() {
-                    const pass = prompt("SECURE ACCESS");
-                    const { error } = await client.auth.signInWithPassword({ email: this.loginEmail, password: pass });
-                    if (!error) window.location.reload();
+                async handleLogin() {
+                    this.loading = true; this.authError = '';
+                    const { error } = await client.auth.signInWithPassword({ email: this.loginEmail, password: this.loginPassword });
+                    if (error) this.authError = error.message;
+                    this.loading = false;
                 },
-                async load() { const { data } = await client.from('debtors').select('*'); this.debtors = data || []; },
-                async loadStaff() { const { data } = await client.from('profiles').select('*'); this.agentList = data || []; },
-                async loadMessages() { const { data } = await client.from('messages').select('*').order('created_at', { ascending: true }); this.messages = data || []; },
                 async searchMatter() {
-                    const { data } = await client.from('debtors').select('*').eq('ref_number', this.searchQuery).single();
-                    if(data) this.activeCase = data; else alert("Matter not found.");
+                    const { data, error } = await client.from('debtors').select('*').eq('ref_number', this.searchQuery).maybeSingle();
+                    if (data) { 
+                        this.activeCase = data;
+                        await client.from('access_logs').insert([{ user_id: this.user.id, debtor_id: data.id, action: 'VIEW' }]);
+                    } else { alert("Matter not found in registry."); }
                 },
-                openDialerWithNumber(num, id) { this.dialerNumber = num; this.view = 'dialer'; },
-                pressKey(k) { this.dialerNumber += k; },
-                backspace() { this.dialerNumber = this.dialerNumber.slice(0, -1); },
-                initiateCall() {
-                    if (!this.dialerNumber) return;
-                    this.callStatus = 'DIALING...';
-                    window.location.href = `sip:${this.dialerNumber}`;
-                    setTimeout(() => {
-                        this.callActive = true; this.callStatus = 'CONNECTED'; this.talkSeconds = 0;
-                        this.talkInterval = setInterval(() => { this.talkSeconds++; this.talkTimer = new Date(this.talkSeconds * 1000).toISOString().substr(14, 5); }, 1000);
-                    }, 2000);
+                initiateTelephony(m) {
+                    window.location.href = `sip:${m.phone}`;
+                    console.log("Telephony Integration Layer: Bridging to SIP...");
+                    setTimeout(() => { this.showWrapModal = true; }, 3000);
                 },
-                endCall() { this.callActive = false; clearInterval(this.talkInterval); this.callStatus = 'ENDED'; this.showWrapModal = true; },
                 async finalizeCall() {
                     const log = { agent: this.user.email, date: new Date().toLocaleString(), outcome: this.workForm.outcome, note: this.workForm.note };
-                    const history = [...(this.activeCase?.work_history || []), log];
-                    if (this.activeCase) await client.from('debtors').update({ work_history: history, last_outcome: this.workForm.outcome }).eq('id', this.activeCase.id);
-                    this.showWrapModal = false; this.activeCase = null; this.view = 'work'; this.dialerNumber = '';
+                    const history = [...(this.activeCase.work_history || []), log];
+                    const upData = { work_history: history, last_outcome: this.workForm.outcome };
+                    if (this.workForm.outcome === 'DNC') upData.is_dnc = true;
+                    
+                    await client.from('debtors').update(upData).eq('id', this.activeCase.id);
+                    this.workForm = { outcome: 'PTP', note: '' }; // Reset Form
+                    this.showWrapModal = false; this.activeCase = null; this.load();
                 },
-                openConversation(staff) { this.activeChatAgent = staff; this.unreadCount = 0; },
+                openConversation(staff) { 
+                    this.activeChatAgent = staff; this.unreadCount = 0;
+                    this.$nextTick(() => { const c = document.getElementById('chatbox'); if(c) c.scrollTop = c.scrollHeight; });
+                },
                 async sendChat() {
                     if (!this.chatInput) return;
                     await client.from('messages').insert([{ sender_id: this.user.id, receiver_id: this.activeChatAgent.id, content: this.chatInput }]);
                     this.chatInput = '';
                 },
-                handleKeyboard(e) {
-                    if (this.view === 'dialer') {
-                        if (e.key >= '0' && e.key <= '9') this.pressKey(e.key);
-                        if (e.key === 'Backspace') this.backspace();
-                        if (e.key === 'Enter' && !this.callActive) this.initiateCall();
-                    }
-                },
-                async heartbeat() { await client.from('profiles').update({ last_heartbeat: new Date() }).eq('id', this.user.id); },
+                async load() { const { data } = await client.from('debtors').select('*').limit(50); this.debtors = data || []; },
+                async loadStaff() { const { data } = await client.from('profiles').select('*'); this.agentList = data || []; },
+                async loadMessages() { const { data } = await client.from('messages').select('*').order('created_at', { ascending: true }); this.messages = data || []; },
                 async logout() { await client.auth.signOut(); window.location.reload(); }
             }
         }).mount('#app')
