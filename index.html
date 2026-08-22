@@ -300,3 +300,16 @@
                     let up = { work_history: history, last_outcome: this.workForm.outcome };
                     if (this.workForm.outcome === 'PYMT_RCVD' && this.role === 'supervisor') {
                         up.collected_amount = (parseFloat(this.activeCase.collected_amount)||0) + parseFloat(this.workForm.paymentAmount);
+                        up.total_debt = parseFloat(this.activeCase.total_debt) - parseFloat(this.workForm.paymentAmount);
+                        up.last_outcome = `PAID_${this.workForm.method}`;
+                    }
+                    if (this.workForm.outcome === 'PTP') up.due_date = this.workForm.dueDate;
+                    await client.from('debtors').update(up).eq('id', this.activeCase.id);
+                    this.activeCase = null; this.load();
+                },
+                isOverdue(date) { if (!date) return false; return new Date(date) < new Date().setHours(0,0,0,0); }
+            }
+        }).mount('#app')
+    </script>
+</body>
+</html>
