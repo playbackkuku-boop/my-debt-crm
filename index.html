@@ -3,101 +3,88 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mafanyolle Recoveries | Excalibur Management</title>
+    <title>Mafanyolle Recoveries | Command Center</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/papaparse/5.3.2/papaparse.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=JetBrains+Mono&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&display=swap');
         body { font-family: 'Outfit', sans-serif; background-color: #020617; color: #f1f5f9; height: 100vh; overflow: hidden; }
-        
-        /* SWORD BACKGROUND AESTHETIC */
         .excalibur-bg {
-            background-image: linear-gradient(rgba(2, 6, 23, 0.9), rgba(2, 6, 23, 0.9)), url('https://images.unsplash.com/photo-1590059516314-5d5179268686?q=80&w=2070&auto=format&fit=crop');
+            background-image: linear-gradient(rgba(2, 6, 23, 0.93), rgba(2, 6, 23, 0.93)), url('https://images.unsplash.com/photo-1590059516314-5d5179268686?q=80&w=2070&auto=format&fit=crop');
             background-size: cover; background-position: center;
         }
-
         .glass { background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(59, 130, 246, 0.2); backdrop-filter: blur(15px); }
         .sidebar-active { background: rgba(59, 130, 246, 0.2); border-left: 4px solid #3b82f6; color: white; }
-        .timer-glow { text-shadow: 0 0 10px rgba(59, 130, 246, 0.8); }
+        .pulse-red { box-shadow: 0 0 15px #ef4444; border: 2px solid #ef4444; }
         [v-cloak] { display: none; }
-        ::-webkit-calendar-picker-indicator { filter: invert(1); cursor: pointer; }
     </style>
 </head>
 <body class="excalibur-bg">
     <div id="app" v-cloak class="h-full flex flex-col">
-        <!-- LOGIN SCREEN -->
+        <!-- LOGIN -->
         <div v-if="!user" class="min-h-screen flex items-center justify-center p-4">
-            <div class="glass p-12 rounded-[50px] w-full max-w-md shadow-2xl text-center border-t-4 border-blue-600">
+            <div class="glass p-12 rounded-[50px] w-full max-w-md text-center border-t-4 border-blue-600 shadow-2xl">
                 <i class="fa-solid fa-sword text-blue-500 text-5xl mb-6"></i>
-                <h1 class="text-3xl font-800 tracking-tighter text-white uppercase mb-10 italic">Mafanyolle<br>Recoveries</h1>
-                <input v-model="loginEmail" type="email" placeholder="Staff Email" class="w-full p-4 bg-slate-900 border border-slate-700 rounded-2xl mb-4 text-white text-center outline-none focus:border-blue-500 transition">
-                <button @click="login" class="w-full bg-blue-600 hover:bg-blue-500 p-5 rounded-2xl font-bold uppercase tracking-widest text-xs transition shadow-lg">Authenticate</button>
+                <h1 class="text-3xl font-800 tracking-tighter text-white uppercase mb-8 italic">Mafanyolle<br>Recoveries</h1>
+                <input v-model="loginEmail" type="email" placeholder="Collector ID" class="w-full p-4 bg-slate-900 border border-slate-700 rounded-2xl mb-4 text-white text-center outline-none">
+                <button @click="login" class="w-full bg-blue-600 hover:bg-blue-500 p-5 rounded-2xl font-bold uppercase tracking-widest text-xs transition">Unlock Terminal</button>
             </div>
         </div>
 
-        <!-- MAIN APP INTERFACE -->
+        <!-- MAIN INTERFACE -->
         <div v-else class="flex flex-1 overflow-hidden">
             <!-- Sidebar -->
             <aside class="w-72 glass border-r border-blue-900/30 flex flex-col p-8">
                 <div class="mb-10">
-                    <div class="text-blue-500 font-black text-[10px] uppercase tracking-widest mb-1 italic"><i class="fa-solid fa-sword mr-2"></i> Mafanyolle</div>
-                    <div class="text-xl font-800 text-white tracking-tighter uppercase leading-none">Recoveries</div>
-                    <div class="mt-2"><span class="bg-blue-600 px-2 py-0.5 rounded text-[8px] font-bold uppercase">{{ role }}</span></div>
+                    <div class="text-blue-500 font-black text-[10px] uppercase tracking-widest mb-1 italic">Mafanyolle Recoveries</div>
+                    <div class="text-xl font-800 text-white uppercase tracking-tighter italic">Command Center</div>
+                    <div class="mt-2"><span class="bg-blue-600 px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest">{{ role }}</span></div>
                 </div>
 
                 <!-- CLOCK IN / STATUS TRACKER -->
                 <div class="bg-slate-950/50 p-5 rounded-3xl border border-blue-900/30 mb-8">
-                    <label class="text-[9px] font-black text-slate-500 uppercase block mb-3 tracking-widest">Shift Activity</label>
+                    <label class="text-[9px] font-black text-slate-500 uppercase block mb-3">Agent Status</label>
                     <select v-model="agentStatus" @change="updateStatus" class="w-full bg-slate-900 border border-slate-700 p-3 rounded-xl text-xs font-bold outline-none mb-4" :class="agentStatus === 'Ready' ? 'text-emerald-400' : 'text-amber-400'">
-                        <option value="Ready">🟢 Online (Ready)</option>
-                        <option value="Lunch">🍕 Lunch Break</option>
+                        <option value="Ready">🟢 Ready</option>
+                        <option value="Lunch">🍕 Lunch</option>
                         <option value="Tea">☕ Tea Break</option>
-                        <option value="Admin">📑 Admin Work</option>
-                        <option value="Comfort">🚻 Comfort Break</option>
-                        <option value="Offline">🛑 Logout / Offline</option>
+                        <option value="Admin">📑 Admin</option>
+                        <option value="Comfort">🚻 Comfort</option>
                     </select>
-                    <div class="text-center">
-                        <div class="text-[10px] text-slate-500 uppercase font-bold">Status Duration</div>
-                        <div class="text-2xl font-mono font-bold text-blue-400 timer-glow">{{ statusTimer }}</div>
-                    </div>
+                    <div class="text-center font-mono text-xl text-blue-400 font-bold">{{ statusTimer }}</div>
                 </div>
 
                 <nav class="flex-1 space-y-4 uppercase text-[10px] font-bold tracking-[0.2em]">
-                    <div @click="view = 'ledger'" :class="view === 'ledger' ? 'sidebar-active text-white' : 'text-slate-500'" class="px-4 py-3 rounded-r-lg flex items-center gap-3 cursor-pointer transition">
-                        <i class="fa-solid fa-vault"></i> Matter Ledger
-                    </div>
-                    <div @click="view = 'upload'" :class="view === 'upload' ? 'sidebar-active text-white' : 'text-slate-500'" class="px-4 py-3 rounded-r-lg flex items-center gap-3 cursor-pointer transition">
-                        <i class="fa-solid fa-upload"></i> Bulk Intake
-                    </div>
+                    <div @click="view = 'ledger'" :class="view === 'ledger' ? 'sidebar-active text-white' : 'text-slate-500'" class="px-4 py-3 rounded-r-lg flex items-center gap-3 cursor-pointer"><i class="fa-solid fa-vault"></i> Ledger</div>
+                    <div v-if="role === 'supervisor'" @click="view = 'monitoring'" :class="view === 'command' ? 'sidebar-active text-white' : 'text-slate-500'" class="px-4 py-3 rounded-r-lg flex items-center gap-3 cursor-pointer text-blue-400"><i class="fa-solid fa-tower-broadcast"></i> Live Monitoring</div>
                 </nav>
 
-                <button @click="logout" class="text-slate-600 hover:text-red-500 font-bold text-xs uppercase flex items-center gap-2 pt-6 border-t border-blue-900/20 transition"><i class="fa-solid fa-power-off"></i> Terminate Session</button>
+                <button @click="logout" class="text-slate-600 hover:text-red-500 font-bold text-[10px] uppercase flex items-center gap-2 pt-6 border-t border-blue-900/20"><i class="fa-solid fa-power-off"></i> Terminate</button>
             </aside>
 
             <!-- Main Work Area -->
-            <main class="flex-1 flex flex-col min-w-0 bg-slate-950/20 overflow-hidden relative">
+            <main class="flex-1 flex flex-col min-w-0 overflow-hidden relative">
                 <header class="h-24 glass flex items-center justify-between px-10 border-b border-blue-900/30">
                     <div class="flex items-center gap-4 flex-1">
                         <i class="fa-solid fa-search text-blue-500"></i>
-                        <input v-model="search" type="text" placeholder="Search Master Registry..." class="bg-transparent outline-none w-full max-w-lg text-sm italic tracking-widest text-white">
+                        <input v-model="search" type="text" placeholder="Search Master Ledger..." class="bg-transparent outline-none w-full max-w-lg text-sm text-white italic">
                     </div>
                     <div class="flex items-center gap-8">
                         <div class="text-right">
-                            <div class="text-[9px] font-black text-slate-500 uppercase tracking-widest">Total Recovery Volume</div>
+                            <div class="text-[9px] font-black text-slate-500 uppercase tracking-widest italic italic">System Recovered (R)</div>
                             <div class="text-xl font-bold font-mono text-emerald-400">R {{ formatMoney(totalCollected) }}</div>
                         </div>
-                        <button @click="showAdd = true" class="bg-blue-600 text-white px-6 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-white hover:text-black transition shadow-2xl">+ New Case</button>
+                        <button @click="showAdd = true" class="bg-blue-600 text-white px-6 py-3 rounded-xl font-black text-[10px] uppercase shadow-2xl">+ New Case</button>
                     </div>
                 </header>
 
-                <div v-if="view === 'ledger'" class="flex-1 overflow-y-auto p-10">
-                    <!-- Dashboard Cards -->
-                    <div class="grid grid-cols-3 gap-8 mb-10 text-center uppercase tracking-widest font-black">
+                <!-- VIEW: LEDGER -->
+                <div v-if="view === 'ledger'" class="flex-1 overflow-y-auto p-10 animate-in fade-in duration-500">
+                    <div class="grid grid-cols-3 gap-8 mb-10 text-center uppercase tracking-widest font-black italic">
                         <div class="glass p-6 rounded-[30px] border-l-4 border-l-blue-600">
-                            <div class="text-[9px] text-slate-500 mb-2">Book Liability</div>
+                            <div class="text-[9px] text-slate-500 mb-2">Book Value</div>
                             <div class="text-2xl font-mono text-white">R{{ formatMoney(totalDebt) }}</div>
                         </div>
                         <div class="glass p-6 rounded-[30px] border-l-4 border-l-emerald-500">
@@ -106,46 +93,28 @@
                         </div>
                         <div class="glass p-6 rounded-[30px] border-l-4 border-l-red-600">
                             <div class="text-[9px] text-red-500 mb-2">PTP Breaches</div>
-                            <div class="text-2xl font-mono text-red-500 italic">R{{ formatMoney(overdueDebt) }}</div>
+                            <div class="text-2xl font-mono text-red-500">R{{ formatMoney(overdueDebt) }}</div>
                         </div>
                     </div>
 
-                    <!-- Ledger -->
                     <div class="glass rounded-[40px] overflow-hidden border border-blue-900/30">
                         <table class="w-full text-left">
-                            <thead class="bg-slate-900/80 text-slate-500 text-[10px] font-black uppercase tracking-widest border-b border-blue-900/30">
-                                <tr>
-                                    <th class="p-6">Matter</th>
-                                    <th class="p-6 text-center">Liability</th>
-                                    <th class="p-6 text-center">Collected</th>
-                                    <th class="p-6 text-center">Collector</th>
-                                    <th class="p-6 text-center">Status</th>
-                                    <th class="p-6 text-right">Telephony</th>
-                                </tr>
+                            <thead class="bg-slate-900/80 text-slate-500 text-[10px] font-black uppercase border-b border-blue-900/30">
+                                <tr><th class="p-6">Matter</th><th class="p-6">Reference</th><th class="p-6">Liability</th><th class="p-6">Collected</th><th class="p-6 text-center">Status</th><th class="p-6 text-right">Telephony</th></tr>
                             </thead>
                             <tbody class="divide-y divide-blue-900/10 text-xs">
-                                <tr v-for="d in filteredDebtors" :key="d.id" class="hover:bg-blue-600/5 transition group">
-                                    <td class="p-6">
-                                        <div class="font-bold uppercase text-white tracking-tighter">{{ d.name }}</div>
-                                        <div class="text-[10px] text-blue-500 font-bold uppercase tracking-widest italic italic">{{ d.ref_number || '---' }}</div>
-                                    </td>
-                                    <td class="p-6 text-center font-mono font-bold text-white tracking-tighter italic">R {{ formatMoney(d.total_debt) }}</td>
-                                    <td class="p-6 text-center font-mono font-bold text-emerald-500 tracking-tighter">R {{ formatMoney(d.collected_amount || 0) }}</td>
+                                <tr v-for="d in filteredDebtors" :key="d.id" class="hover:bg-blue-600/5 transition">
+                                    <td class="p-6"><div class="font-bold uppercase text-white">{{ d.name }}</div><div class="text-[9px] text-blue-500 font-bold uppercase tracking-widest italic">{{ d.id_number || '---' }}</div></td>
+                                    <td class="p-6 text-slate-400 font-bold uppercase">{{ d.ref_number || '---' }}</td>
+                                    <td class="p-6 font-mono font-bold text-white tracking-tighter">R {{ formatMoney(d.total_debt) }}</td>
+                                    <td class="p-6 font-mono font-bold text-emerald-500 tracking-tighter">R {{ formatMoney(d.collected_amount) }}</td>
                                     <td class="p-6 text-center">
-                                        <div v-if="role === 'supervisor'" class="flex items-center justify-center">
-                                            <select @change="allocateDebtor(d, $event)" class="bg-slate-900 border border-slate-700 text-[9px] px-2 py-1 rounded outline-none text-slate-300">
-                                                <option v-for="agent in collectors" :value="agent.id" :selected="d.user_id === agent.id">{{ agent.email.split('@')[0] }}</option>
-                                            </select>
-                                        </div>
-                                        <div v-else class="text-slate-500 font-bold uppercase text-[9px]">{{ d.collector_email || 'ME' }}</div>
-                                    </td>
-                                    <td class="p-6 text-center font-bold">
-                                        <span v-if="isOverdue(d.due_date)" class="text-red-500 animate-pulse tracking-tighter uppercase font-black italic">Breached</span>
-                                        <span v-else class="text-slate-600 tracking-widest uppercase font-bold">{{ d.due_date || d.last_outcome || 'NEW' }}</span>
+                                        <span v-if="isOverdue(d.due_date)" class="text-red-500 animate-pulse font-black uppercase">Breach</span>
+                                        <span v-else class="text-slate-600 uppercase font-bold">{{ d.due_date || d.last_outcome || 'NEW' }}</span>
                                     </td>
                                     <td class="p-6 text-right space-x-2">
-                                        <button @click="initiateCall(d)" class="bg-emerald-600 hover:bg-emerald-500 text-white p-2 rounded-lg transition"><i class="fa-solid fa-phone text-[10px]"></i></button>
-                                        <button @click="workAccount(d)" class="bg-slate-800 hover:bg-white hover:text-black px-3 py-2 rounded-lg font-black text-[9px] uppercase tracking-widest transition">Work Case</button>
+                                        <button @click="initiateCall(d)" class="bg-emerald-600 text-white p-2 rounded-lg"><i class="fa-solid fa-phone text-[10px]"></i></button>
+                                        <button @click="workAccount(d)" class="bg-slate-800 hover:bg-white hover:text-black px-3 py-2 rounded-lg font-black text-[9px] uppercase transition">Work</button>
                                     </td>
                                 </tr>
                             </tbody>
@@ -153,88 +122,99 @@
                     </div>
                 </div>
 
-                <!-- VIEW: BULK UPLOAD -->
-                <div v-if="view === 'upload'" class="flex-1 flex items-center justify-center p-20 text-center">
-                    <div class="glass p-16 rounded-[60px] border-2 border-dashed border-blue-900/30 w-full max-w-lg">
-                        <i class="fa-solid fa-file-import text-7xl text-blue-600 mb-8"></i>
-                        <h2 class="text-3xl font-800 uppercase tracking-tighter mb-4 italic">Mass Data Intake</h2>
-                        <input type="file" @change="handleFileUpload" accept=".csv" class="hidden" id="fileBtn">
-                        <label for="fileBtn" class="bg-blue-600 px-10 py-5 rounded-2xl font-bold uppercase tracking-[0.2em] text-xs cursor-pointer hover:bg-blue-500 transition shadow-2xl">Select Spreadsheet (.csv)</label>
+                <!-- VIEW: LIVE MONITORING (SUPERVISOR ONLY) -->
+                <div v-if="view === 'monitoring' && role === 'supervisor'" class="flex-1 overflow-y-auto p-10 animate-in slide-in-from-right duration-500">
+                    <h2 class="text-3xl font-800 uppercase tracking-tighter mb-10 italic">Live Agent Command Center</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div v-for="agent in agentList" class="glass p-6 rounded-[30px] border-t-4" :class="agent.is_on_call ? 'border-red-600 pulse-red' : 'border-blue-600'">
+                            <div class="flex justify-between items-start mb-4">
+                                <div class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center font-bold">{{ agent.email.charAt(0).toUpperCase() }}</div>
+                                <span class="text-[9px] font-black uppercase px-2 py-1 rounded" :class="agent.current_status === 'Ready' ? 'bg-emerald-600' : 'bg-amber-600'">{{ agent.current_status }}</span>
+                            </div>
+                            <div class="font-bold text-white mb-1 truncate">{{ agent.email.split('@')[0] }}</div>
+                            <div v-if="agent.is_on_call" class="text-red-500 text-[10px] font-black uppercase animate-pulse italic"><i class="fa-solid fa-headset mr-1"></i> LIVE ON CALL</div>
+                            <div v-else class="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Idle / Waiting</div>
+                        </div>
                     </div>
                 </div>
             </main>
         </div>
 
-        <!-- FULL-SCREEN WORK PANEL -->
+        <!-- FULL-SCREEN WORK STATION -->
         <div v-if="activeCase" class="fixed inset-0 bg-slate-950 flex flex-col z-[100] animate-in slide-in-from-bottom duration-300">
-            <div class="h-24 glass border-b border-blue-900/30 flex items-center justify-between px-12 shrink-0">
+            <div class="h-24 glass border-b border-blue-900/30 flex items-center justify-between px-12">
                 <div class="flex items-center gap-10">
-                    <div class="bg-blue-600 px-4 py-1.5 rounded-lg text-[10px] font-black tracking-widest uppercase italic shadow-lg shadow-blue-900/40">Working Account</div>
-                    <div>
-                        <h2 class="text-3xl font-800 uppercase text-white tracking-tighter italic">{{ activeCase.name }}</h2>
-                        <p class="text-[10px] font-bold text-slate-500 uppercase tracking-[0.3em] font-mono italic">{{ activeCase.ref_number }} | PH: {{ activeCase.phone }}</p>
-                    </div>
+                    <div class="bg-blue-600 px-4 py-1.5 rounded-lg text-[10px] font-black uppercase italic italic">Active Interaction</div>
+                    <h2 class="text-3xl font-800 uppercase text-white tracking-tighter italic italic">{{ activeCase.name }}</h2>
                 </div>
                 <button @click="activeCase = null"><i class="fa-solid fa-circle-xmark text-4xl text-slate-700 hover:text-white transition"></i></button>
             </div>
             <div class="flex-1 flex overflow-hidden">
-                <!-- HISTORY -->
                 <div class="w-1/2 p-12 border-r border-blue-900/30 overflow-y-auto bg-black/20">
-                    <h3 class="text-[10px] font-black text-blue-500 uppercase tracking-[0.4em] mb-10 border-b border-blue-500/20 pb-4 italic">Interaction Audit History</h3>
+                    <h3 class="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-10 border-b border-blue-500/20 pb-4 italic italic">Matter Audit History</h3>
                     <div class="space-y-6">
-                        <div v-for="log in (activeCase.work_history || []).slice().reverse()" class="bg-slate-900/80 p-6 rounded-3xl border border-blue-900/20 shadow-xl">
+                        <div v-for="log in (activeCase.work_history || []).slice().reverse()" class="bg-slate-900/80 p-6 rounded-3xl border border-blue-900/20">
                             <div class="flex justify-between text-[10px] font-black mb-3 uppercase tracking-widest">
-                                <span class="text-blue-400 bg-blue-900/30 px-2 py-0.5 rounded">{{ log.outcome }}</span>
-                                <span class="text-slate-600 italic">{{ log.date }}</span>
+                                <span class="text-blue-500 bg-blue-900/30 px-2 py-0.5 rounded">{{ log.outcome }}</span>
+                                <span class="text-slate-600 italic italic">{{ log.date }}</span>
                             </div>
-                            <p class="text-sm text-slate-300 italic italic">{{ log.note }}</p>
+                            <p class="text-sm text-slate-300 italic italic italic">{{ log.note }}</p>
                         </div>
                     </div>
                 </div>
-                <!-- OUTCOME FORM -->
                 <div class="w-1/2 p-12 space-y-10 overflow-y-auto bg-slate-900/10 flex flex-col">
                     <div class="grid grid-cols-2 gap-8">
                         <div>
-                            <label class="text-[10px] font-black text-slate-500 uppercase block mb-3 italic tracking-widest">Outcome Code</label>
-                            <select v-model="workForm.outcome" class="w-full bg-slate-900 border border-blue-900/30 p-5 rounded-2xl text-xs font-bold text-white outline-none focus:border-blue-500 transition">
-                                <option value="PTP">PTP (Promise to Pay)</option>
+                            <label class="text-[10px] font-black text-slate-500 uppercase block mb-3 italic tracking-widest">Wrap Code</label>
+                            <select v-model="workForm.outcome" class="w-full bg-slate-900 border border-blue-900/30 p-5 rounded-2xl text-xs font-bold text-white outline-none">
+                                <option value="PTP">PTP (Promise)</option>
                                 <option value="STAT_REQ">Statement Requested</option>
                                 <option value="REFUSAL">Refuse to Pay</option>
-                                <option value="INT_NOTE">Internal Note Only</option>
-                                <option value="NO_ANS">No Answer / Left Message</option>
-                                <option v-if="role === 'supervisor'" value="PYMT_RCVD">★ SUPERVISOR: Allocation Recieved</option>
+                                <option value="INT_NOTE">Internal Note</option>
+                                <option v-if="role === 'supervisor'" value="PYMT_RCVD">★ SUPERVISOR: Payment Received</option>
                                 <option v-if="role === 'supervisor'" value="PAID_UP">★ SUPERVISOR: Account Settled</option>
                             </select>
                         </div>
                         <div v-if="workForm.outcome === 'PTP' || activeCase.due_date">
-                            <label class="text-[10px] font-black text-slate-500 uppercase block mb-3 italic tracking-widest">PTP Calendar Picker</label>
-                            <input v-model="workForm.dueDate" type="date" class="w-full bg-slate-900 border border-blue-900/30 p-5 rounded-2xl text-xs font-bold text-white outline-none">
+                            <label class="text-[10px] font-black text-slate-500 uppercase block mb-3 italic tracking-widest">Calendar</label>
+                            <input v-model="workForm.dueDate" type="date" class="w-full bg-slate-900 border border-blue-900/30 p-5 rounded-2xl text-xs font-bold text-white">
                         </div>
                     </div>
                     <div v-if="workForm.outcome === 'PYMT_RCVD' && role === 'supervisor'">
-                        <label class="text-[10px] font-black text-emerald-500 uppercase block mb-3 italic tracking-[0.3em]">Recaptured Payment Amount (R)</label>
-                        <input v-model="workForm.paymentAmount" type="number" class="w-full bg-emerald-900/10 border border-emerald-500/30 p-5 rounded-2xl text-lg font-bold text-emerald-400 outline-none font-mono">
+                        <label class="text-[10px] font-black text-emerald-500 uppercase block mb-3 italic tracking-widest">Enter Recaptured R Amount</label>
+                        <input v-model="workForm.paymentAmount" type="number" class="w-full bg-emerald-900/10 border border-emerald-500/30 p-5 rounded-2xl text-lg font-bold text-emerald-400 font-mono outline-none">
                     </div>
-                    <div class="flex-1 flex flex-col">
-                        <label class="text-[10px] font-black text-slate-500 uppercase block mb-3 italic tracking-widest">Detailed Collector Notes</label>
-                        <textarea v-model="workForm.note" class="flex-1 bg-slate-900 border border-blue-900/30 p-8 rounded-[30px] text-sm text-white outline-none resize-none italic shadow-inner" placeholder="Type account outcome here..."></textarea>
-                    </div>
-                    <button @click="submitWork" class="w-full bg-blue-600 p-8 rounded-3xl font-black uppercase text-[10px] tracking-[0.4em] transition shadow-2xl shadow-blue-900/40 hover:bg-white hover:text-black italic">Finalize Matter Record</button>
+                    <textarea v-model="workForm.note" class="flex-1 bg-slate-900 border border-blue-900/30 p-8 rounded-[30px] text-sm text-white outline-none resize-none italic" placeholder="Capture interaction outcome details..."></textarea>
+                    <button @click="submitWork" class="w-full bg-blue-600 p-8 rounded-3xl font-black uppercase text-xs tracking-widest transition shadow-2xl">Confirm and Update Matter</button>
                 </div>
             </div>
         </div>
 
+        <!-- DIALER (TELEPHONY) -->
+        <aside v-if="dialerVisible" class="w-80 glass fixed right-0 top-24 bottom-0 p-6 flex flex-col z-50">
+            <div class="flex justify-between items-center mb-10"><h3 class="text-[10px] font-black uppercase text-blue-500 italic">Dialer Suite</h3><button @click="dialerVisible = false"><i class="fa-solid fa-xmark text-slate-500"></i></button></div>
+            <div class="bg-black rounded-[40px] p-6 border border-slate-800 mb-8 text-center h-48 flex flex-col justify-center">
+                <div class="text-[10px] uppercase font-bold tracking-widest mb-2" :class="onCall ? 'text-emerald-500 animate-pulse' : 'text-slate-600'">{{ onCall ? 'Line Active' : 'Ready' }}</div>
+                <div class="text-2xl font-black text-white font-mono italic">{{ dialerNumber || '0000000000' }}</div>
+                <div v-if="onCall" class="text-lg font-mono text-emerald-500 font-bold mt-2">{{ callTimer }}</div>
+            </div>
+            <div class="flex justify-center gap-6 mt-auto">
+                <button v-if="!onCall" @click="startCall" class="w-16 h-16 bg-emerald-600 rounded-full flex items-center justify-center text-white text-2xl transition"><i class="fa-solid fa-phone"></i></button>
+                <button v-else @click="endCall" class="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center text-white text-2xl animate-pulse transition"><i class="fa-solid fa-phone-slash"></i></button>
+            </div>
+        </aside>
+
         <!-- ADD MODAL -->
         <div v-if="showAdd" class="fixed inset-0 bg-black/95 backdrop-blur-xl flex items-center justify-center p-4 z-[110]">
-            <div class="glass p-12 rounded-[60px] w-full max-w-2xl shadow-2xl border-t-4 border-blue-600 text-left">
-                <h2 class="text-3xl font-800 text-white uppercase tracking-tighter mb-10 italic">Case Intake Instruction</h2>
-                <div class="grid grid-cols-2 gap-6 mb-12">
-                    <div v-for="f in [{l:'Name',k:'name'},{l:'Phone',k:'phone'},{l:'ID/Reg',k:'id_number'},{l:'Reference',k:'ref_number'},{l:'Portfolio',k:'book_name'},{l:'Liability(R)',k:'total_debt',t:'number'}]">
+            <div class="glass p-12 rounded-[60px] w-full max-w-2xl border-t-4 border-blue-600">
+                <h2 class="text-3xl font-800 text-white uppercase tracking-tighter mb-10 italic italic">Case Instruction</h2>
+                <div class="grid grid-cols-2 gap-6 mb-12 text-left">
+                    <div v-for="f in [{l:'Name',k:'name'},{l:'Phone',k:'phone'},{l:'ID Number',k:'id_number'},{l:'Reference',k:'ref_number'},{l:'Portfolio',k:'book_name'},{l:'Liability(R)',k:'total_debt',t:'number'}]">
                         <label class="text-[9px] font-black text-slate-500 uppercase mb-2 block tracking-widest">{{f.l}}</label>
-                        <input v-model="addForm[f.k]" :type="f.t||'text'" class="bg-slate-900 border border-blue-900/20 p-4 rounded-xl text-xs text-white outline-none w-full">
+                        <input v-model="addForm[f.k]" :type="f.t||'text'" class="bg-slate-900 border border-blue-900/20 p-4 rounded-xl text-xs text-white w-full outline-none">
                     </div>
                 </div>
-                <div class="flex gap-4"><button @click="saveDebtor" class="flex-1 bg-blue-600 p-5 rounded-2xl font-black text-[10px] tracking-widest uppercase italic transition">Load Account</button><button @click="showAdd = false" class="flex-1 bg-slate-800 text-slate-500 p-5 rounded-2xl font-black text-[10px] tracking-widest uppercase transition">Cancel</button></div>
+                <div class="flex gap-4"><button @click="saveDebtor" class="flex-1 bg-blue-600 p-5 rounded-2xl font-black text-[10px] uppercase transition shadow-lg shadow-blue-900/50">Add Matter</button><button @click="showAdd = false" class="flex-1 bg-slate-800 text-slate-500 p-5 rounded-2xl font-black text-[10px] uppercase transition">Cancel</button></div>
             </div>
         </div>
     </div>
@@ -247,8 +227,8 @@
         Vue.createApp({
             data() {
                 return {
-                    user: null, role: 'collector', loginEmail: '', debtors: [], collectors: [], search: '', showAdd: false, activeCase: null, view: 'ledger',
-                    addForm: { name: '', id_number: '', phone: '', ref_number: '', book_name: '', total_debt: 0 },
+                    user: null, role: 'collector', loginEmail: '', debtors: [], search: '', showAdd: false, activeCase: null, view: 'ledger',
+                    agentList: [], addForm: { name: '', id_number: '', phone: '', ref_number: '', book_name: '', total_debt: 0 },
                     workForm: { outcome: 'INT_NOTE', note: '', dueDate: '', paymentAmount: 0 },
                     dialerVisible: false, onCall: false, dialerNumber: '', callTimer: '00:00', callInterval: null,
                     agentStatus: 'Ready', statusTimer: '00:00:00', statusSeconds: 0, timerInterval: null
@@ -271,33 +251,36 @@
                     this.role = prof ? prof.role : 'collector';
                     this.startTimer();
                     this.load(); 
-                    if (this.role === 'supervisor') this.loadCollectors();
+                    if (this.role === 'supervisor') this.loadAgentList();
+                    setInterval(() => this.heartbeat(), 10000); // 10 second heartbeat
                 }
             },
             methods: {
                 formatMoney(v) { return parseFloat(v||0).toLocaleString('en-ZA', { minimumFractionDigits: 2 }); },
                 async login() {
-                    const pass = prompt("SECURE ACCESS: Enter Intelligence Password");
+                    const pass = prompt("SECURE SYSTEM ACCESS: Enter Password");
                     const { data, error } = await client.auth.signInWithPassword({ email: this.loginEmail, password: pass });
-                    if (error) alert("Denied"); else window.location.reload();
+                    if (error) alert("Access Denied"); else window.location.reload();
                 },
-                async logout() { await client.auth.signOut(); window.location.reload(); },
+                async logout() { await client.from('profiles').update({ current_status: 'Offline', is_on_call: false }).eq('id', this.user.id); await client.auth.signOut(); window.location.reload(); },
                 async load() {
                     const { data } = await client.from('debtors').select('*').order('created_at', { ascending: false });
                     this.debtors = data || [];
                 },
-                async loadCollectors() {
-                    const { data } = await client.from('profiles').select('id, email').eq('role', 'collector');
-                    this.collectors = data || [];
+                async loadAgentList() {
+                    const { data } = await client.from('profiles').select('*');
+                    this.agentList = data || [];
                 },
-                async allocateDebtor(d, event) {
-                    const newId = event.target.value;
-                    const { error } = await client.from('debtors').update({ user_id: newId }).eq('id', d.id);
-                    if (error) alert(error.message); else alert("File Re-allocated successfully.");
+                async heartbeat() {
+                    await client.from('profiles').update({ 
+                        current_status: this.agentStatus, 
+                        is_on_call: this.onCall,
+                        last_heartbeat: new Date()
+                    }).eq('id', this.user.id);
+                    if (this.role === 'supervisor') this.loadAgentList();
                 },
                 startTimer() {
-                    this.statusSeconds = 0;
-                    if (this.timerInterval) clearInterval(this.timerInterval);
+                    this.statusSeconds = 0; if (this.timerInterval) clearInterval(this.timerInterval);
                     this.timerInterval = setInterval(() => {
                         this.statusSeconds++;
                         const h = Math.floor(this.statusSeconds/3600).toString().padStart(2,'0');
@@ -309,34 +292,34 @@
                 async updateStatus() {
                     this.startTimer();
                     await client.from('agent_logs').insert([{ user_id: this.user.id, status: this.agentStatus }]);
+                    this.heartbeat();
                 },
                 initiateCall(d) { this.dialerVisible = true; this.dialerNumber = d.phone; this.activeCase = d; },
                 startCall() {
-                    this.onCall = true; let s = 0;
+                    this.onCall = true; let s = 0; this.heartbeat();
                     this.callInterval = setInterval(() => { s++; const m = Math.floor(s/60).toString().padStart(2,'0'); const sc = (s%60).toString().padStart(2,'0'); this.callTimer = `${m}:${sc}`; }, 1000);
                 },
                 endCall() {
-                    this.onCall = false; clearInterval(this.callInterval); this.workAccount(this.activeCase);
+                    this.onCall = false; clearInterval(this.callInterval); this.heartbeat(); this.workAccount(this.activeCase);
                     this.workForm.note = `Talk Time: ${this.callTimer}. Outcome: `;
                 },
                 workAccount(d) { this.activeCase = d; this.workForm = { outcome: 'INT_NOTE', note: '', dueDate: d.due_date || '', paymentAmount: 0 }; },
                 async saveDebtor() {
-                    const { error } = await client.from('debtors').insert([{ ...this.addForm, user_id: this.user.id }]);
-                    if (error) alert(error.message); else { this.showAdd = false; this.load(); }
+                    await client.from('debtors').insert([{ ...this.addForm, user_id: this.user.id }]);
+                    this.showAdd = false; this.load();
                 },
                 async submitWork() {
-                    if(!this.workForm.note) return alert("Interaction notes required.");
                     const log = { date: new Date().toLocaleString('en-ZA'), outcome: this.workForm.outcome, note: this.workForm.note };
                     const history = [...(this.activeCase.work_history || []), log];
                     let up = { work_history: history, last_outcome: this.workForm.outcome };
-                    if (this.workForm.outcome === 'PYMT_RCVD') {
+                    if (this.workForm.outcome === 'PYMT_RCVD' && this.role === 'supervisor') {
                         up.collected_amount = (parseFloat(this.activeCase.collected_amount)||0) + parseFloat(this.workForm.paymentAmount);
                         up.total_debt = parseFloat(this.activeCase.total_debt) - parseFloat(this.workForm.paymentAmount);
                     }
                     if (this.workForm.outcome === 'PTP') up.due_date = this.workForm.dueDate;
                     if (this.workForm.outcome === 'PAID_UP') { up.total_debt = 0; up.due_date = null; }
-                    const { error } = await client.from('debtors').update(up).eq('id', this.activeCase.id);
-                    if(error) alert(error.message); else { this.activeCase = null; this.load(); }
+                    await client.from('debtors').update(up).eq('id', this.activeCase.id);
+                    this.activeCase = null; this.load();
                 },
                 isOverdue(date) { if (!date) return false; return new Date(date) < new Date().setHours(0,0,0,0); }
             }
