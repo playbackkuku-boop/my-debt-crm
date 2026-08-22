@@ -143,3 +143,200 @@
                         </div>
                     </div>
                     <div class="flex-1 flex flex-col bg-slate-950/20">
+                        <div v-if="activeChatAgent" class="flex-1 flex flex-col overflow-hidden">
+                            <div class="p-6 border-b border-blue-900/30 font-black uppercase text-xs text-blue-500 italic">Secure Channel: {{ activeChatAgent.email }}</div>
+                            <div class="flex-1 overflow-y-auto p-8 space-y-4" id="chatbox">
+                                <div v-for="m in filteredMessages" class="max-w-[70%]" :class="m.sender_id === user.id ? 'ml-auto text-right' : ''">
+                                    <div class="bg-slate-900/80 p-4 rounded-3xl border border-blue-900/30 text-sm italic shadow-xl text-white">{{ m.content }}</div>
+                                </div>
+                            </div>
+                            <div class="p-8 bg-slate-950/50 border-t border-blue-900/30 flex gap-4">
+                                <input v-model="chatInput" @keyup.enter="sendPrivateChat" placeholder="Type individual message..." class="flex-1 bg-transparent outline-none italic text-sm text-white">
+                                <button @click="sendPrivateChat" class="text-blue-500 text-xl"><i class="fa-solid fa-paper-plane"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MONITORING -->
+                <div v-if="view === 'monitoring' && role === 'supervisor'" class="flex-1 overflow-y-auto p-10">
+                    <div class="grid grid-cols-4 gap-6">
+                        <div v-for="agent in agentList" :key="agent.id" class="glass p-6 rounded-[30px] border-t-4" :class="agent.is_on_call ? 'led-red pulse-red' : 'border-blue-600'">
+                            <div class="flex justify-between items-center mb-4 text-[9px] font-black uppercase">
+                                <span :class="isAgentOffline(agent.last_heartbeat) ? 'text-slate-600' : 'text-emerald-400'">{{ isAgentOffline(agent.last_heartbeat) ? 'Offline' : agent.current_status }}</span>
+                            </div>
+                            <div class="font-black text-white text-lg tracking-tighter uppercase">{{ agent.email.split('@')[0] }}</div>
+                            <div class="mt-4 border-t border-blue-900/20 pt-4 text-center">
+                                <div class="text-[9px] text-slate-500 font-bold uppercase mb-1">Session Summary</div>
+                                <div class="text-md font-mono text-emerald-400 italic">Recaptured: R{{ formatMoney(getAgentTotal(agent.id)) }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <!-- WRAP-UP MODAL (Automatic on Hangup) -->
+        <div v-if="showWrapModal" class="fixed inset-0 bg-black/98 flex items-center justify-center p-4 z-[200]">
+            <div class="glass w-full max-w-4xl p-12 rounded-[50px] flex flex-col shadow-2xl border-t-8 border-blue-600">
+                <h2 class="text-3xl font-800 text-white uppercase tracking-tighter mb-10 italic">Call Disposition</h2>
+                <div class="grid grid-cols-2 gap-10 overflow-y-auto pr-4">
+                    <div class="space-y-6">
+                        <label class="text-[10px] font-black text-slate-500 uppercase block mb-1">Outcome Wrap Code</label>
+                        <select v-model="workForm.outcome" class="w-full bg-slate-900 border border-blue-900/30 p-5 rounded-2xl text-xs font-bold text-white outline-none">
+                            <option value="PTP">Promise to Pay (PTP)</option>
+                            <option value="INSTALLMENTS">PTP - Installment Plan</option>
+                            <option value="CALLBACK">Callback Scheduled</option>
+                            <option value="REFUSAL">Refusal to Confirm DOB</option>
+                            <option value="UNEMPLOYED">Unemployed</option>
+                            <option value="RTP">Refusal to Pay</option>
+                            <option value="INT_NOTE">Internal Note Only</option>
+                            <option v-if="role === 'supervisor'" value="PYMT_RCVD">★ Supervisor: Payment Recieved</option>
+                        </select>
+                        <div v-if="workForm.outcome === 'PTP'"><label class="text-[10px] font-black text-slate-500 uppercase block mb-3 italic">PTP Date Picker</label><input v-model="workForm.dueDate" type="date" class="w-full bg-slate-900 border border-blue-900/30 p-5 rounded-2xl text-xs font-bold text-white outline-none"></div>
+                        <div v-if="workForm.outcome === 'INSTALLMENTS'" class="space-y-3 bg-slate-950 p-4 rounded-3xl">
+                            <h3 class="text-[9px] font-black text-emerald-500 uppercase">Build Plan</h3>
+                            <div v-for="(inst, idx) in workForm.installments" :key="idx" class="flex gap-2"><input v-model="inst.amount" type="number" placeholder="R" class="bg-slate-900 border border-slate-800 p-2 rounded-lg text-xs w-1/2 text-white"><input v-model="inst.date" type="date" class="bg-slate-900 border border-slate-800 p-2 rounded-lg text-xs w-1/2 text-white"></div>
+                            <button @click="workForm.installments.push({amount:0,date:''})" class="text-blue-500 text-[9px] font-bold uppercase">+ Add Row</button>
+                        </div>
+                    </div>
+                    <div class="flex flex-col text-left">
+                        <label class="text-[10px] font-black text-slate-500 uppercase block mb-3">Collector Interaction Narrative</label>
+                        <textarea v-model="workForm.note" class="flex-1 bg-slate-900 border border-blue-900/30 p-8 rounded-[30px] text-sm text-white outline-none resize-none italic" placeholder="Enter conversation details..."></textarea>
+                    </div>
+                </div>
+                <div class="flex gap-6 mt-10"><button @click="submitWork" class="flex-1 bg-blue-600 p-8 rounded-3xl font-black uppercase text-xs tracking-widest transition shadow-2xl hover:bg-white hover:text-black italic italic">Confirm Outcome Update</button><button @click="showWrapModal = false" class="bg-slate-800 p-8 rounded-3xl text-slate-500 font-bold uppercase text-xs">Abort</button></div>
+            </div>
+        </div>
+
+        <!-- ADD MODAL (SUPERVISOR ONLY) -->
+        <div v-if="showAdd" class="fixed inset-0 bg-black/95 backdrop-blur-xl flex items-center justify-center p-4 z-[110]">
+            <div class="glass p-12 rounded-[60px] w-full max-w-2xl border-t-4 border-blue-600 shadow-2xl text-left">
+                <h2 class="text-3xl font-800 text-white uppercase tracking-tighter mb-10 italic italic">Matter Entry Instruction</h2>
+                <div class="grid grid-cols-2 gap-6 mb-12">
+                    <div><label class="text-[9px] font-black text-slate-500 uppercase mb-2 block tracking-widest">Name</label><input v-model="addForm.name" class="bg-slate-900 border border-blue-900/20 p-4 rounded-xl text-xs text-white outline-none w-full"></div>
+                    <div><label class="text-[9px] font-black text-slate-500 uppercase mb-2 block tracking-widest">Phone</label><input v-model="addForm.phone" class="bg-slate-900 border border-blue-900/20 p-4 rounded-xl text-xs text-white outline-none w-full"></div>
+                    <div><label class="text-[9px] font-black text-slate-500 uppercase mb-2 block tracking-widest">ID Number</label><input v-model="addForm.id_number" class="bg-slate-900 border border-blue-900/20 p-4 rounded-xl text-xs text-white outline-none w-full"></div>
+                    <div><label class="text-[9px] font-black text-slate-500 uppercase mb-2 block tracking-widest">Reference</label><input v-model="addForm.ref_number" class="bg-slate-900 border border-blue-900/20 p-4 rounded-xl text-xs text-white outline-none w-full"></div>
+                    <div><label class="text-[9px] font-black text-slate-500 uppercase mb-2 block tracking-widest">Portfolio</label><input v-model="addForm.book_name" class="bg-slate-900 border border-blue-900/20 p-4 rounded-xl text-xs text-white outline-none w-full"></div>
+                    <div><label class="text-[9px] font-black text-slate-500 uppercase mb-2 block tracking-widest">Liability(R)</label><input v-model="addForm.total_debt" type="number" class="bg-slate-900 border border-blue-900/20 p-4 rounded-xl text-xs text-white outline-none w-full"></div>
+                </div>
+                <div class="flex gap-4"><button @click="saveDebtor" class="flex-1 bg-blue-600 p-5 rounded-2xl font-black text-[10px] uppercase transition shadow-lg shadow-blue-900/50">Capture File</button><button @click="showAdd = false" class="flex-1 bg-slate-800 text-slate-500 p-5 rounded-2xl font-black text-[10px] uppercase transition">Abort</button></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const S_URL = 'https://idxtnkisgqucufafjidv.supabase.co';
+        const S_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkeHRua2lzZ3F1Y3VmYWZqaWR2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODczMjI2MTEsImV4cCI6MjEwMjg5ODYxMX0.Oi0_qsMfQUbE3V5uoi1VOSjPwks41xy65tG77v_ICyc';
+        const client = supabase.createClient(S_URL, S_KEY);
+
+        Vue.createApp({
+            data() {
+                return {
+                    user: null, role: 'collector', loginEmail: '', debtors: [], searchQuery: '', showAdd: false, activeCase: null, view: 'work',
+                    agentList: [], workForm: { outcome: 'INT_NOTE', note: '', dueDate: '', paymentAmount: 0, allocatedCollector: '', installments: [] },
+                    messages: [], chatInput: '', activeChatAgent: null, unreadCount: 0,
+                    onCall: false, talkSeconds: 0, talkTimer: '00:00', talkInterval: null,
+                    agentStatus: 'Ready', statusTimer: '00:00:00', statusSeconds: 0, timerInterval: null,
+                    totalTalkSeconds: 0, totalPauseSeconds: 0, showWrapModal: false
+                }
+            },
+            computed: {
+                filteredMessages() { if(!this.activeChatAgent) return []; return this.messages.filter(m => (m.sender_id === this.user.id && m.receiver_id === this.activeChatAgent.id) || (m.sender_id === this.activeChatAgent.id && m.receiver_id === this.user.id)); },
+                totalDebt() { return this.debtors.reduce((s, d) => s + parseFloat(d.total_debt || 0), 0); },
+                totalCollected() { return this.debtors.reduce((s, d) => s + parseFloat(d.collected_amount || 0), 0); }
+            },
+            async mounted() {
+                const { data: { session } } = await client.auth.getSession();
+                if (session) { 
+                    this.user = session.user;
+                    const { data: prof } = await client.from('profiles').select('*').eq('id', this.user.id).single();
+                    this.role = prof ? prof.role : 'collector';
+                    await this.loadPersistentStats();
+                    this.startTimer(); this.load(); this.loadAgentList(); this.loadMessages();
+                    
+                    client.channel('main').on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => this.loadAgentList())
+                    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (p) => {
+                        this.messages.push(p.new);
+                        if(p.new.receiver_id === this.user.id) { this.unreadCount++; document.getElementById('beep').play(); }
+                    }).on('postgres_changes', { event: '*', schema: 'public', table: 'debtors' }, () => this.load()).subscribe();
+                    
+                    setInterval(() => this.updateHeartbeat(), 10000);
+                    setInterval(() => this.saveStatsToDB(), 15000); // Save talk/pause time every 15s
+                }
+            },
+            methods: {
+                formatMoney(v) { return parseFloat(v||0).toLocaleString('en-ZA', { minimumFractionDigits: 2 }); },
+                formatTime(s) { const h = Math.floor(s/3600).toString().padStart(2,'0'); const m = Math.floor((s%3600)/60).toString().padStart(2,'0'); const sc = (s%60).toString().padStart(2,'0'); return `${h}:${m}:${sc}`; },
+                getAgentTotal(id) { return this.debtors.filter(d => d.user_id === id).reduce((s, d) => s + parseFloat(d.collected_amount || 0), 0); },
+                isAgentOffline(hb) { if(!hb) return true; return (new Date() - new Date(hb)) / 1000 > 45; },
+                async login() {
+                    const pass = prompt("SECURE SYSTEM ACCESS");
+                    const { data, error } = await client.auth.signInWithPassword({ email: this.loginEmail, password: pass });
+                    if (error) alert("Denied"); else window.location.reload();
+                },
+                async logout() { await this.saveStatsToDB(); await client.from('profiles').update({ current_status: 'Offline', is_on_call: false }).eq('id', this.user.id); await client.auth.signOut(); window.location.reload(); },
+                async load() { const { data } = await client.from('debtors').select('*').order('created_at', { ascending: false }); this.debtors = data || []; },
+                async loadAgentList() { const { data } = await client.from('profiles').select('*'); this.agentList = data || []; },
+                async loadMessages() { const { data } = await client.from('messages').select('*').order('created_at', { ascending: true }); this.messages = data || []; },
+                async searchMatter() {
+                    const { data } = await client.from('debtors').select('*').eq('ref_number', this.searchQuery).single();
+                    if(data) this.activeCase = data; else alert("Matter Reference not found.");
+                },
+                async loadPersistentStats() {
+                    const { data } = await client.from('daily_stats').select('*').eq('user_id', this.user.id).eq('work_date', new Date().toISOString().split('T')[0]).single();
+                    if (data) { this.totalTalkSeconds = data.talk_seconds; this.totalPauseSeconds = data.pause_seconds; }
+                },
+                async saveStatsToDB() {
+                    await client.from('daily_stats').upsert({ user_id: this.user.id, work_date: new Date().toISOString().split('T')[0], talk_seconds: this.totalTalkSeconds, pause_seconds: this.totalPauseSeconds }, { onConflict: 'user_id,work_date' });
+                },
+                async updateHeartbeat() { await client.from('profiles').update({ current_status: this.agentStatus, is_on_call: this.onCall, last_heartbeat: new Date() }).eq('id', this.user.id); },
+                startTimer() {
+                    this.statusSeconds = 0; if (this.timerInterval) clearInterval(this.timerInterval);
+                    this.timerInterval = setInterval(() => {
+                        this.statusSeconds++; this.statusTimer = this.formatTime(this.statusSeconds);
+                        if(this.agentStatus !== 'Ready' && !this.onCall) this.totalPauseSeconds++;
+                        if(this.onCall) this.totalTalkSeconds++;
+                    }, 1000);
+                },
+                async updateShiftStatus() { this.startTimer(); this.updateHeartbeat(); },
+                startCall() {
+                    document.getElementById('ringing').play();
+                    this.onCall = true; this.talkSeconds = 0; this.updateHeartbeat();
+                    this.talkInterval = setInterval(() => { this.talkSeconds++; this.talkTimer = Math.floor(this.talkSeconds/60).toString().padStart(2,'0') + ':' + (this.talkSeconds%60).toString().padStart(2,'0'); }, 1000);
+                    setTimeout(() => { document.getElementById('ringing').pause(); }, 3000);
+                },
+                endCall() {
+                    this.onCall = false; clearInterval(this.talkInterval); document.getElementById('ringing').pause(); this.updateHeartbeat();
+                    this.workForm.note = `Dialer Talk Time: ${this.talkTimer}. Outcome: `;
+                    this.showWrapModal = true;
+                },
+                openPrivateChat(agent) { this.activeChatAgent = agent; this.unreadCount = 0; },
+                async sendPrivateChat() {
+                    if(!this.chatInput || !this.activeChatAgent) return;
+                    await client.from('messages').insert([{ sender_id: this.user.id, receiver_id: this.activeChatAgent.id, content: this.chatInput }]);
+                    this.chatInput = '';
+                },
+                async saveDebtor() { await client.from('debtors').insert([{ ...this.addForm, user_id: null }]); this.showAdd = false; this.load(); },
+                async submitWork() {
+                    const log = { date: new Date().toLocaleString('en-ZA'), outcome: this.workForm.outcome, note: this.workForm.note, agent: this.user.email.split('@')[0] };
+                    const history = [...(this.activeCase.work_history || []), log];
+                    let up = { work_history: history, last_outcome: this.workForm.outcome };
+                    if (this.role === 'collector' && !this.activeCase.user_id) up.user_id = this.user.id;
+                    if (this.workForm.outcome === 'PYMT_RCVD' && this.role === 'supervisor') {
+                        up.collected_amount = (parseFloat(this.activeCase.collected_amount)||0) + parseFloat(this.workForm.paymentAmount);
+                        up.total_debt = parseFloat(this.activeCase.total_debt) - parseFloat(this.workForm.paymentAmount);
+                        up.user_id = this.workForm.allocatedCollector;
+                    }
+                    if (this.workForm.outcome === 'PTP') up.due_date = this.workForm.dueDate;
+                    if (this.workForm.outcome === 'INSTALLMENTS') { up.installments = this.workForm.installments; up.due_date = this.workForm.installments[0].date; }
+                    await client.from('debtors').update(up).eq('id', this.activeCase.id);
+                    this.showWrapModal = false; this.activeCase = null; this.load(); this.searchQuery = '';
+                },
+                isOverdue(date) { if (!date) return false; return new Date(date) < new Date().setHours(0,0,0,0); }
+            }
+        }).mount('#app')
+    </script>
+</body>
+</html>
