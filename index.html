@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Mafanyolle Recoveries | Absolute Enterprise Suite</title>
+    <title>Mafanyolle Recoveries | Absolute Command Suite</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -10,121 +10,134 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=JetBrains+Mono&display=swap');
         body { font-family: 'Outfit', sans-serif; background-color: #020617; color: #f1f5f9; height: 100vh; overflow: hidden; }
-        .excalibur-bg { background-image: linear-gradient(rgba(2, 6, 23, 0.96), rgba(2, 6, 23, 0.96)), url('https://images.unsplash.com/photo-1554224155-169641357599?q=80&w=2000&auto=format&fit=crop'); background-size: cover; background-position: center; }
         .glass { background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(59, 130, 246, 0.2); backdrop-filter: blur(25px); }
         .sidebar-active { background: rgba(59, 130, 246, 0.2); border-left: 4px solid #3b82f6; color: white; }
         [v-cloak] { display: none; }
-        ::-webkit-calendar-picker-indicator { filter: invert(1); cursor: pointer; }
+        input[type="date"], select { color-scheme: dark; }
     </style>
 </head>
-<body class="excalibur-bg">
-    <div id="app" v-cloak class="h-full flex flex-col text-sm">
+<body>
+    <div id="app" v-cloak class="h-full flex flex-col">
+        <!-- SFX Assets -->
+        <audio id="beep" src="https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3"></audio>
         
-        <!-- LOGIN -->
+        <!-- LOGIN SCREEN -->
         <div v-if="!user" class="min-h-screen flex items-center justify-center p-4">
             <div class="glass p-12 rounded-[50px] w-full max-w-sm text-center border-t-4 border-blue-600 shadow-2xl">
                 <i class="fa-solid fa-sword text-blue-500 text-6xl mb-6"></i>
-                <h1 class="text-3xl font-800 text-white uppercase mb-8 italic italic">Mafanyolle<br>Recoveries</h1>
-                <input v-model="loginEmail" type="email" placeholder="Staff Email" class="w-full p-4 bg-slate-900 border border-slate-700 rounded-2xl mb-4 text-white text-center outline-none focus:border-blue-500 transition">
-                <button @click="login" class="w-full bg-blue-600 hover:bg-blue-500 p-5 rounded-2xl font-bold uppercase text-xs transition">Unlock terminal</button>
+                <h1 class="text-3xl font-800 text-white uppercase mb-10 italic">Mafanyolle<br>Recoveries</h1>
+                <input v-model="loginEmail" type="email" placeholder="Staff ID" class="w-full p-4 bg-slate-900 border border-slate-700 rounded-2xl mb-4 text-white text-center outline-none focus:border-blue-500 transition">
+                <button @click="login" class="w-full bg-blue-600 hover:bg-blue-500 p-5 rounded-2xl font-bold uppercase text-xs transition shadow-xl">Unlock Terminal</button>
             </div>
         </div>
 
-        <!-- MAIN INTERFACE -->
+        <!-- MAIN DASHBOARD -->
         <div v-else class="flex flex-1 overflow-hidden">
-            <!-- Sidebar (Universal Navigation) -->
+            <!-- Sidebar -->
             <aside class="w-72 glass border-r border-blue-900/30 flex flex-col p-8 shrink-0">
-                <div class="mb-6">
-                    <div class="text-blue-500 font-black text-[10px] uppercase tracking-widest mb-1 italic">Mafanyolle Recoveries</div>
-                    <div class="text-xl font-800 text-white uppercase tracking-tighter">Command Centre</div>
-                    <div class="mt-2 flex gap-2"><span class="bg-blue-600 px-2 py-0.5 rounded text-[8px] font-black uppercase">{{ role }}</span></div>
-                </div>
+                <div class="mb-10 text-blue-500 font-black text-[10px] uppercase tracking-widest italic">Mafanyolle Recoveries</div>
 
-                <div class="bg-slate-950/50 p-4 rounded-2xl border border-blue-900/30 mb-6 space-y-2">
-                    <div class="flex justify-between text-[10px] uppercase font-bold text-slate-500"><span>Talk Today:</span><span class="text-emerald-400">{{ formatTime(dailyTalkSeconds) }}</span></div>
-                    <div class="flex justify-between text-[10px] uppercase font-bold text-slate-500"><span>Pause Today:</span><span class="text-amber-400">{{ formatTime(dailyPauseSeconds) }}</span></div>
-                </div>
-
-                <div class="bg-slate-950/50 p-5 rounded-3xl border border-blue-900/30 mb-8">
-                    <select v-model="agentStatus" @change="updateStatus" class="w-full bg-slate-900 border border-slate-700 p-3 rounded-xl text-xs font-bold outline-none" :class="agentStatus === 'Ready' ? 'text-emerald-400' : 'text-amber-400'">
-                        <option value="Ready">Ready</option>
-                        <option value="Tea">Tea Break</option>
-                        <option value="Lunch">Lunch</option>
-                        <option value="Admin">Admin</option>
-                    </select>
+                <!-- Shift Analytics -->
+                <div class="bg-slate-950/50 p-5 rounded-3xl border border-blue-900/30 mb-8 space-y-4">
+                    <div class="text-center pb-2 border-b border-white/5">
+                        <select v-model="agentStatus" @change="updateStatus" class="bg-transparent border-none text-xs font-bold outline-none" :class="agentStatus === 'Ready' ? 'text-emerald-400' : 'text-amber-400'">
+                            <option value="Ready">🟢 Ready</option>
+                            <option value="Tea">☕ Tea Break</option>
+                            <option value="Lunch">🍕 Lunch Break</option>
+                            <option value="Admin">📑 Admin Work</option>
+                            <option value="Comfort">🚻 Comfort Break</option>
+                        </select>
+                    </div>
+                    <div class="space-y-2 text-[10px] uppercase font-bold text-slate-400 tracking-tighter">
+                        <div class="flex justify-between"><span>Session:</span><span class="text-white">{{ statusTimer }}</span></div>
+                        <div class="flex justify-between"><span>Talk Today:</span><span class="text-emerald-400">{{ formatTime(dailyStats.talk_seconds) }}</span></div>
+                    </div>
                 </div>
 
                 <nav class="flex-1 space-y-4 uppercase text-[10px] font-bold tracking-widest">
-                    <div @click="view = 'work'" :class="view === 'work' ? 'sidebar-active text-white' : 'text-slate-500'" class="px-4 py-3 rounded-r-lg flex items-center gap-3 cursor-pointer"><i class="fa-solid fa-headset"></i> Matter Work Station</div>
+                    <div @click="view = 'work'" :class="view === 'work' ? 'sidebar-active text-white' : 'text-slate-500'" class="px-4 py-3 rounded-r-lg flex items-center gap-3 cursor-pointer"><i class="fa-solid fa-vault"></i> Matter Station</div>
                     <div @click="view = 'performance'" :class="view === 'performance' ? 'sidebar-active text-white' : 'text-slate-500'" class="px-4 py-3 rounded-r-lg flex items-center gap-3 cursor-pointer"><i class="fa-solid fa-chart-line"></i> Performance</div>
-                    <div v-if="role !== 'collector'" @click="view = 'supervisor'" :class="view === 'supervisor' ? 'sidebar-active text-white' : 'text-slate-500'" class="px-4 py-3 rounded-r-lg flex items-center gap-3 cursor-pointer text-blue-400 font-black"><i class="fa-solid fa-tower-broadcast"></i> Team Command</div>
+                    <div v-if="role !== 'collector'" @click="view = 'monitoring'" :class="view === 'monitoring' ? 'sidebar-active text-white' : 'text-slate-500'" class="px-4 py-3 rounded-r-lg flex items-center gap-3 cursor-pointer text-blue-400"><i class="fa-solid fa-tower-broadcast"></i> Team Monitor</div>
+                    <div v-if="role !== 'collector'" @click="view = 'campaigns'" :class="view === 'campaigns' ? 'sidebar-active text-white' : 'text-slate-500'" class="px-4 py-3 rounded-r-lg flex items-center gap-3 cursor-pointer text-amber-500"><i class="fa-solid fa-flag"></i> Campaigns</div>
                 </nav>
-                <button @click="logout" class="text-slate-600 hover:text-red-500 font-bold text-[10px] uppercase flex items-center gap-2 pt-6 border-t border-blue-900/20 transition"><i class="fa-solid fa-power-off"></i> Terminate</button>
+                <div class="mt-auto pt-6 border-t border-blue-900/20"><button @click="handleLogout" class="text-slate-600 hover:text-red-500 font-bold text-[10px] uppercase flex items-center gap-2"><i class="fa-solid fa-power-off"></i> Terminate</button></div>
             </aside>
 
             <!-- Main Panel -->
             <main class="flex-1 flex flex-col min-w-0 bg-slate-950/20 overflow-hidden relative">
-                <!-- VIEW: WORK STATION (ONE MATTER SEARCH) -->
-                <div v-if="view === 'work'" class="flex-1 flex flex-col">
-                    <header class="h-24 glass flex items-center justify-between px-10 border-b border-blue-900/30">
-                        <div class="flex items-center gap-6 flex-1">
-                            <i class="fa-solid fa-search text-blue-500"></i>
-                            <input v-model="searchQuery" @keyup.enter="searchMatter" placeholder="Enter Ref Number and press Enter..." class="bg-transparent outline-none w-full max-w-xl text-sm text-white italic tracking-widest">
-                        </div>
+                <header class="h-24 glass flex items-center justify-between px-10 border-b border-blue-900/30 shadow-2xl">
+                    <input v-model="searchQuery" @keyup.enter="searchMatter" placeholder="Search Ref or Account Number..." class="bg-transparent outline-none w-full max-w-lg text-sm text-white italic tracking-widest">
+                    <div class="flex items-center gap-10">
                         <div class="text-right">
-                            <div class="text-[9px] font-black text-slate-500 uppercase">Recaptured (ZAR)</div>
+                            <div class="text-[9px] font-black text-slate-500 uppercase italic">Recaptured (ZAR)</div>
                             <div class="text-xl font-bold font-mono text-emerald-400 italic">R {{ formatMoney(totalCollected) }}</div>
                         </div>
-                    </header>
+                        <button v-if="role !== 'collector'" @click="showAdd = true" class="bg-blue-600 text-white px-6 py-3 rounded-xl font-black text-[10px] uppercase shadow-2xl">+ New Intake</button>
+                    </div>
+                </header>
 
-                    <div v-if="!activeCase" class="flex-1 flex flex-col items-center justify-center opacity-30">
-                        <i class="fa-solid fa-sword text-9xl text-slate-700 mb-10"></i>
-                        <h2 class="text-2xl font-800 uppercase tracking-[0.5em]">System Ready</h2>
+                <!-- WORK STATION -->
+                <div v-if="view === 'work'" class="flex-1 flex flex-col overflow-hidden">
+                    <div v-if="!activeCase" class="flex-1 flex flex-col items-center justify-center opacity-20 italic">
+                        <i class="fa-solid fa-search text-9xl mb-6"></i>
+                        <h2 class="text-2xl font-800 uppercase tracking-widest">Search a matter to begin work.</h2>
                     </div>
 
-                    <div v-else class="flex-1 flex overflow-hidden animate-in slide-in-from-bottom duration-500">
-                        <!-- LEFT Details & History -->
-                        <div class="w-1/3 p-10 border-r border-blue-900/30 overflow-y-auto bg-black/30 text-left">
-                            <h3 class="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-6 italic">Audit History</h3>
-                            <div class="space-y-4">
-                                <div v-for="log in (activeCase.work_history || []).slice().reverse()" class="glass p-4 rounded-2xl border border-blue-900/10">
-                                    <div class="flex justify-between text-[8px] font-black uppercase text-slate-500"><span>{{ log.agent }}</span><span>{{ log.date }}</span></div>
-                                    <p class="text-xs text-white mt-1 italic italic italic">"{{ log.note }}"</p>
+                    <div v-else class="flex-1 flex overflow-hidden animate-in fade-in duration-500">
+                        <!-- LEFT Audit History -->
+                        <div class="w-1/3 p-10 border-r border-blue-900/30 overflow-y-auto bg-black/20 text-left">
+                            <h3 class="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-10 border-b border-blue-500/20 pb-4">Audit History Log</h3>
+                            <div class="space-y-6">
+                                <div v-for="log in (activeCase.work_history || []).slice().reverse()" class="glass p-5 rounded-3xl border border-blue-900/20 shadow-xl">
+                                    <div class="flex justify-between text-[8px] font-black uppercase text-blue-500 mb-2"><span>{{ log.agent }}</span><span>{{ log.date }}</span></div>
+                                    <p class="text-[11px] font-black text-white uppercase mb-1">{{ log.outcome }}</p>
+                                    <p class="text-xs text-slate-400 italic">"{{ log.note }}"</p>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- CENTER Dialer -->
-                        <div class="flex-1 flex flex-col p-12 text-left">
-                            <h2 class="text-4xl font-800 uppercase text-white tracking-tighter italic mb-4">{{ activeCase.name }}</h2>
-                            <div class="text-xl font-black font-mono text-white tracking-tighter mb-10">Balance: R {{ formatMoney(activeCase.total_debt) }}</div>
-                            
-                            <!-- THE DIALER CORE -->
-                            <div class="glass flex-1 rounded-[50px] p-10 flex flex-col items-center justify-center border-blue-600/30 shadow-inner">
-                                <div class="text-5xl font-black font-mono text-white tracking-tighter mb-10 italic italic italic">{{ activeCase.phone }}</div>
-                                <div v-if="onCall" class="text-3xl font-mono text-emerald-500 font-black animate-pulse mb-10">TALKING: {{ talkTimer }}</div>
+                        <!-- CENTER Core Matter Detail -->
+                        <div class="flex-1 flex flex-col p-12 text-left bg-slate-900/10 overflow-y-auto">
+                            <div class="flex justify-between items-start mb-10">
+                                <div>
+                                    <h2 class="text-5xl font-800 uppercase text-white tracking-tighter italic">{{ activeCase.name }}</h2>
+                                    <div class="flex gap-6 mt-4 font-black text-[10px] text-blue-500 uppercase tracking-widest italic">
+                                        <span>Account: {{ activeCase.account_number || '---' }}</span>
+                                        <span>Ref: {{ activeCase.ref_number }}</span>
+                                        <span>Portfolio: {{ activeCase.portfolio || 'GENERAL' }}</span>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-[10px] font-bold text-slate-500 uppercase">Portfolio Balance</div>
+                                    <div class="text-5xl font-black font-mono text-white tracking-tighter italic">R {{ formatMoney(activeCase.total_debt) }}</div>
+                                </div>
+                            </div>
+
+                            <div class="glass p-10 rounded-[50px] border-blue-600/30 shadow-inner flex flex-col items-center">
+                                <div class="text-xs font-black uppercase text-slate-500 tracking-[0.4em] mb-4 italic">Integrated Dialer</div>
+                                <div class="text-6xl font-black font-mono text-white tracking-tighter mb-10 italic">{{ activeCase.phone }}</div>
+                                <div v-if="onCall" class="text-2xl font-mono text-emerald-400 font-black animate-pulse mb-10">Talking... {{ talkTimer }}</div>
                                 <div class="flex gap-10">
-                                    <button v-if="!onCall" @click="startRealCall(activeCase)" class="w-24 h-24 bg-emerald-600 rounded-full text-white text-3xl transition hover:scale-110 shadow-2xl"><i class="fa-solid fa-phone"></i></button>
-                                    <button v-else @click="endRealCall" class="w-24 h-24 bg-red-600 rounded-full text-white text-3xl transition animate-pulse hover:scale-110 shadow-2xl"><i class="fa-solid fa-phone-slash"></i></button>
+                                    <button v-if="!onCall" @click="startRealCall(activeCase)" class="w-24 h-24 bg-emerald-600 rounded-full flex items-center justify-center text-white text-3xl transition hover:scale-110 shadow-2xl"><i class="fa-solid fa-phone"></i></button>
+                                    <button v-else @click="endRealCall" class="w-24 h-24 bg-red-600 rounded-full flex items-center justify-center text-white text-3xl transition animate-pulse hover:scale-110 shadow-2xl"><i class="fa-solid fa-phone-slash"></i></button>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- VIEW: SUPERVISOR -->
-                <div v-if="view === 'supervisor'" class="flex-1 overflow-y-auto p-10 animate-in slide-in-from-right text-left">
-                    <h2 class="text-3xl font-800 uppercase text-white italic mb-10">Team Performance Command</h2>
-                    <div class="grid grid-cols-4 gap-6 mb-10">
-                        <div v-for="agent in agentList" class="glass p-6 rounded-3xl border-t-4" :class="agent.is_on_call ? 'border-red-600' : 'border-blue-600'">
-                            <div class="flex justify-between items-center mb-4">
-                                <span class="text-[9px] font-black uppercase px-2 py-1 rounded bg-blue-900/50">{{ agent.current_status }}</span>
-                                <button v-if="role === 'admin'" @click="kickAgent(agent.id)" class="text-red-500 text-[10px] font-bold">KICK</button>
+                <!-- VIEW: TEAM MONITORING -->
+                <div v-if="view === 'monitoring'" class="flex-1 overflow-y-auto p-10 animate-in slide-in-from-right">
+                    <div class="grid grid-cols-4 gap-6">
+                        <div v-for="agent in agentList" :key="agent.id" class="glass p-6 rounded-[30px] border-t-4" :class="agent.is_on_call ? 'led-red' : 'border-blue-600'">
+                            <div class="flex justify-between items-center mb-4 text-[9px] font-black uppercase">
+                                <span :class="isAgentOffline(agent.last_heartbeat) ? 'text-slate-600' : 'text-emerald-400'">{{ isAgentOffline(agent.last_heartbeat) ? 'Offline' : agent.current_status }}</span>
+                                <button @click="kickAgent(agent.id)" class="text-red-500 font-bold hover:text-white transition">KICK</button>
                             </div>
-                            <div class="font-black text-white text-lg uppercase truncate">{{ agent.email.split('@')[0] }}</div>
-                            <div class="mt-4 border-t border-white/5 pt-4 text-[10px] uppercase font-bold text-slate-500">
-                                <div>Talk Time: {{ formatTime(agent.talk_seconds || 0) }}</div>
-                                <div>Collections: <span class="text-emerald-400 font-mono">R {{ formatMoney(getAgentTotal(agent.id)) }}</span></div>
+                            <div class="font-black text-white text-lg tracking-tighter uppercase mb-4">{{ agent.email.split('@')[0] }}</div>
+                            <div class="mt-4 border-t border-white/5 pt-4 text-center italic">
+                                <div class="text-[8px] text-slate-500 font-bold uppercase mb-1">Recaptured Today</div>
+                                <div class="text-xl font-bold font-mono text-emerald-400">R{{ formatMoney(getAgentTotal(agent.id)) }}</div>
                             </div>
                         </div>
                     </div>
@@ -132,31 +145,35 @@
             </main>
         </div>
 
-        <!-- MANDATORY WRAP MODAL -->
+        <!-- WRAP-UP MODAL (Mandatory) -->
         <div v-if="showWrapModal" class="fixed inset-0 bg-black/98 flex items-center justify-center p-4 z-[200]">
-            <div class="glass w-full max-w-4xl p-12 rounded-[50px] flex flex-col border-t-8 border-blue-600 text-left">
-                <h2 class="text-3xl font-800 text-white uppercase tracking-tighter mb-10 italic italic">Call Wrap-Up Sequence</h2>
-                <div class="grid grid-cols-2 gap-10">
+            <div class="glass w-full max-w-4xl p-12 rounded-[50px] flex flex-col shadow-2xl border-t-8 border-blue-600 text-left">
+                <h2 class="text-3xl font-800 text-white uppercase tracking-tighter mb-10 italic">Call Disposition</h2>
+                <div class="grid grid-cols-2 gap-10 overflow-y-auto pr-4">
                     <div class="space-y-6">
-                        <label class="text-[10px] font-black text-slate-500 uppercase block">Wrap Code</label>
+                        <label class="text-[10px] font-black text-slate-500 uppercase block mb-1">Wrap Code</label>
                         <select v-model="workForm.outcome" class="w-full bg-slate-900 border border-blue-900/30 p-5 rounded-2xl text-xs font-bold text-white outline-none">
                             <option value="COLLECTION">COLLECTION</option>
-                            <option value="PTP">PTP (PROMISE TO PAY)</option>
+                            <option value="PTP">PTP (Promise to Pay)</option>
                             <option value="BROKEN_PTP">BROKEN PTP</option>
-                            <option value="NO_ANSWER">NO ANSWER</option>
-                            <option value="BUSY">BUSY</option>
+                            <option value="CALL_BACK">CALL BACK</option>
                             <option value="REFUSED">REFUSED TO PAY</option>
+                            <option value="DECEASED">DECEASED</option>
+                            <option value="WRONG_NO">WRONG NUMBER</option>
                         </select>
                         <div v-if="workForm.outcome === 'COLLECTION' || workForm.outcome === 'PTP'">
-                            <label class="text-[10px] font-black text-slate-500 uppercase block mb-3">Amount (R)</label>
+                            <label class="text-[10px] font-black text-slate-500 uppercase block mb-3 italic">Value (R)</label>
                             <input v-model="workForm.paymentAmount" type="number" class="w-full bg-slate-900 border border-blue-900/30 p-5 rounded-2xl text-white outline-none">
-                            <label class="text-[10px] font-black text-slate-500 uppercase block mt-6 mb-3">Date</label>
+                            <label class="text-[10px] font-black text-slate-500 uppercase block mt-6 mb-3 italic">Arrangement Date</label>
                             <input v-model="workForm.dueDate" type="date" class="w-full bg-slate-900 border border-blue-900/30 p-5 rounded-2xl text-white outline-none">
                         </div>
                     </div>
-                    <textarea v-model="workForm.note" class="bg-slate-900 border border-blue-900/30 p-8 rounded-[30px] text-sm text-white outline-none italic resize-none" placeholder="Capture call details..."></textarea>
+                    <div class="flex flex-col">
+                        <label class="text-[10px] font-black text-slate-500 uppercase block mb-3">Call Narrative</label>
+                        <textarea v-model="workForm.note" class="flex-1 bg-slate-900 border border-blue-900/30 p-8 rounded-[30px] text-sm text-white outline-none resize-none italic" placeholder="Capture interaction details..."></textarea>
+                    </div>
                 </div>
-                <button @click="submitEnterpriseWork" class="w-full bg-blue-600 p-8 rounded-3xl font-black uppercase text-xs mt-10 transition shadow-2xl hover:bg-white hover:text-black">Finalize Matter Update</button>
+                <button @click="finalizeInteraction" class="w-full bg-blue-600 p-8 rounded-3xl font-black uppercase text-xs mt-10 transition shadow-2xl hover:bg-white hover:text-black italic">Commit to Audit Log</button>
             </div>
         </div>
     </div>
@@ -172,9 +189,9 @@
                     user: null, role: 'collector', loginEmail: '', debtors: [], searchQuery: '', view: 'work',
                     activeCase: null, showWrapModal: false, onCall: false, talkTimer: '00:00', talkSeconds: 0,
                     agentStatus: 'Ready', statusTimer: '00:00:00', statusSeconds: 0,
-                    totalTalkSeconds: 0, totalPauseSeconds: 0, dailyTalkSeconds: 0, dailyPauseSeconds: 0,
-                    agentList: [], workForm: { outcome: 'INT_NOTE', note: '', dueDate: '', paymentAmount: 0 },
-                    currentSessionId: null
+                    dailyStats: { talk_seconds: 0, pause_seconds: 0 },
+                    agentList: [], workForm: { outcome: 'OTHER', note: '', dueDate: '', paymentAmount: 0 },
+                    session_id: null
                 }
             },
             async mounted() {
@@ -182,43 +199,58 @@
                 if (session) {
                     this.user = session.user;
                     const { data: prof } = await client.from('profiles').select('*').eq('id', this.user.id).single();
+                    if (prof?.force_logout) this.logout();
                     this.role = prof?.role || 'collector';
+                    await this.syncDailyStats();
                     this.initSession();
                     this.load(); this.loadAgentList();
                     setInterval(() => this.heartbeat(), 10000);
+                    setInterval(() => this.savePersistence(), 15000);
                 }
             },
             methods: {
                 formatMoney(v) { return parseFloat(v||0).toLocaleString('en-ZA', { minimumFractionDigits: 2 }); },
                 formatTime(s) { return new Date(s * 1000).toISOString().substr(11, 8); },
-                getAgentTotal(id) { return this.debtors.filter(d => d.user_id === id).reduce((s, d) => s + parseFloat(d.collected_amount || 0), 0); },
                 async login() {
-                    const pass = prompt("SECURE SYSTEM ACCESS");
-                    const { data, error } = await client.auth.signInWithPassword({ email: this.loginEmail, password: pass });
-                    if (data.user) window.location.reload();
+                    const pass = prompt("SECURE ACCESS REQUIRED");
+                    await client.auth.signInWithPassword({ email: this.loginEmail, password: pass });
+                    window.location.reload();
                 },
                 async initSession() {
                     const { data } = await client.from('agent_sessions').insert([{ user_id: this.user.id }]).select().single();
-                    this.currentSessionId = data.id;
-                    setInterval(() => {
-                        this.statusSeconds++; this.statusTimer = this.formatTime(this.statusSeconds);
-                        if (this.agentStatus !== 'Ready') this.dailyPauseSeconds++;
+                    this.session_id = data.id;
+                    setInterval(() => { 
+                        this.statusSeconds++; this.statusTimer = this.formatTime(this.statusSeconds); 
+                        if (this.agentStatus !== 'Ready' && !this.onCall) this.dailyStats.pause_seconds++;
+                        if (this.onCall) this.dailyStats.talk_seconds++;
                     }, 1000);
                 },
-                async heartbeat() { await client.from('profiles').update({ current_status: this.agentStatus, is_on_call: this.onCall, last_heartbeat: new Date() }).eq('id', this.user.id); },
+                async syncDailyStats() {
+                    const today = new Date().toISOString().split('T')[0];
+                    const { data } = await client.from('daily_agent_stats').upsert({ user_id: this.user.id, work_date: today }, { onConflict: 'user_id,work_date' }).select().single();
+                    if(data) this.dailyStats = data;
+                },
+                async savePersistence() {
+                    if(!this.user) return;
+                    const today = new Date().toISOString().split('T')[0];
+                    await client.from('daily_agent_stats').update({ talk_seconds: this.dailyStats.talk_seconds, pause_seconds: this.dailyStats.pause_seconds }).eq('user_id', this.user.id).eq('work_date', today);
+                },
+                async logout() {
+                    if (this.session_id) await client.from('agent_sessions').update({ logout_at: new Date(), session_duration: this.statusSeconds }).eq('id', this.session_id);
+                    await client.from('profiles').update({ current_status: 'Offline', force_logout: false }).eq('id', this.user.id);
+                    await client.auth.signOut(); window.location.reload();
+                },
                 async searchMatter() {
                     const { data } = await client.from('debtors').select('*').eq('ref_number', this.searchQuery).single();
                     if(data) this.activeCase = data; else alert("Matter not found.");
                 },
                 startRealCall(m) {
                     this.onCall = true; this.talkSeconds = 0;
-                    window.location.href = `tel:${m.phone}`;
-                    this.talkInterval = setInterval(() => { this.talkSeconds++; this.dailyTalkSeconds++; this.talkTimer = Math.floor(this.talkSeconds/60).toString().padStart(2,'0') + ':' + (this.talkSeconds%60).toString().padStart(2,'0'); }, 1000);
+                    window.location.href = `zoiper:${m.phone}`;
+                    this.talkInterval = setInterval(() => { this.talkSeconds++; this.talkTimer = Math.floor(this.talkSeconds/60).toString().padStart(2,'0') + ':' + (this.talkSeconds%60).toString().padStart(2,'0'); }, 1000);
                 },
-                endRealCall() {
-                    this.onCall = false; clearInterval(this.talkInterval); this.showWrapModal = true;
-                },
-                async submitEnterpriseWork() {
+                endRealCall() { this.onCall = false; clearInterval(this.talkInterval); this.showWrapModal = true; },
+                async finalizeInteraction() {
                     const log = { date: new Date().toLocaleString(), outcome: this.workForm.outcome, note: this.workForm.note, agent: this.user.email };
                     const history = [...(this.activeCase.work_history || []), log];
                     
@@ -226,13 +258,17 @@
                         await client.from('payments').insert([{ debtor_id: this.activeCase.id, agent_id: this.user.id, amount: this.workForm.paymentAmount }]);
                         await client.from('debtors').update({ collected_amount: parseFloat(this.activeCase.collected_amount||0) + parseFloat(this.workForm.paymentAmount) }).eq('id', this.activeCase.id);
                     }
+                    if (this.workForm.outcome === 'PTP') {
+                        await client.from('ptps').insert([{ debtor_id: this.activeCase.id, agent_id: this.user.id, amount: this.workForm.paymentAmount, due_date: this.workForm.dueDate }]);
+                    }
                     
                     await client.from('debtors').update({ work_history: history, last_outcome: this.workForm.outcome }).eq('id', this.activeCase.id);
                     this.showWrapModal = false; this.activeCase = null; this.load();
                 },
-                async logout() { window.location.reload(); },
                 async load() { const { data } = await client.from('debtors').select('*'); this.debtors = data || []; },
-                async loadAgentList() { const { data } = await client.from('profiles').select('*'); this.agentList = data || []; }
+                async loadAgentList() { const { data } = await client.from('profiles').select('*'); this.agentList = data || []; },
+                async heartbeat() { await client.from('profiles').update({ current_status: this.agentStatus, is_on_call: this.onCall, last_heartbeat: new Date() }).eq('id', this.user.id); },
+                async kickAgent(id) { await client.from('profiles').update({ force_logout: true }).eq('id', id); }
             }
         }).mount('#app')
     </script>
