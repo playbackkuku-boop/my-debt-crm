@@ -3,58 +3,325 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mafanyolle Recoveries | v5.0.0</title>
+    <title>Mafanyolle Recoveries | Enterprise Suite</title>
+    <!-- CSS & Fonts -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/papaparse/5.3.2/papaparse.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&display=swap');
-        body { font-family: 'Outfit', sans-serif; background-color: #0b1120; color: #f1f5f9; overflow: hidden; }
-        .glass { background: rgba(15, 23, 42, 0.95); border: 1px solid rgba(255,255,255,0.05); backdrop-filter: blur(12px); }
-        [v-cloak] { display: none; }
+        body { font-family: 'Outfit', sans-serif; background-color: #0b1120; color: #f1f5f9; }
+        .glass { background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(255,255,255,0.05); backdrop-filter: blur(12px); }
+        .sidebar-active { background: rgba(59, 130, 246, 0.1); border-left: 4px solid #3b82f6; color: white; }
+        input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1); cursor: pointer; }
     </style>
 </head>
-<body>
-    <div id="app" v-cloak>
+<body class="overflow-hidden">
+    <div id="app">
         <!-- LOGIN SCREEN -->
-        <div v-if="!user" class="min-h-screen flex items-center justify-center p-4 bg-slate-950 text-center">
-            <div class="glass p-12 rounded-[50px] w-full max-w-md shadow-2xl border border-slate-800">
-                <div class="mb-4 text-blue-500 font-black text-[10px] tracking-[0.5em]">VERSION 5.0.0</div>
+        <div v-if="!user" class="min-h-screen flex items-center justify-center p-4 bg-slate-950">
+            <div class="glass p-12 rounded-[50px] w-full max-w-md shadow-2xl border border-slate-800 text-center">
+                <div class="mb-10 text-blue-500 font-black text-xs uppercase tracking-[0.4em]">Internal Secure Terminal</div>
                 <h1 class="text-4xl font-800 tracking-tighter text-white uppercase mb-10 italic">Mafanyolle<br>Recoveries</h1>
-                <input v-model="loginEmail" type="email" placeholder="Staff Email" class="w-full p-4 bg-slate-900 border border-slate-800 rounded-2xl mb-4 text-white outline-none focus:border-blue-500 transition text-center">
-                <button @click="login" class="w-full bg-blue-600 hover:bg-blue-500 p-5 rounded-2xl font-bold uppercase tracking-widest text-xs transition">Login to Terminal</button>
+                <input v-model="loginEmail" type="email" placeholder="Collector ID" class="w-full p-4 bg-slate-900 border border-slate-800 rounded-2xl mb-4 text-white outline-none focus:border-blue-500 text-center">
+                <button @click="login" class="w-full bg-blue-600 hover:bg-blue-500 p-5 rounded-2xl font-bold uppercase tracking-widest text-xs transition">Login</button>
             </div>
         </div>
 
         <!-- MAIN DASHBOARD -->
         <div v-else class="flex h-screen overflow-hidden">
-            <aside class="w-64 glass border-r border-slate-800 flex flex-col shrink-0 p-8">
-                <div class="text-blue-500 font-black text-[10px] uppercase tracking-widest mb-1">Mafanyolle</div>
-                <div class="text-xl font-800 text-white tracking-tighter uppercase mb-10 leading-none">Recoveries</div>
-                <nav class="flex-1 space-y-4 uppercase text-[10px] font-bold tracking-widest">
-                    <div @click="view = 'ledger'" :class="view === 'ledger' ? 'text-blue-400' : 'text-slate-500'" class="flex items-center gap-3 cursor-pointer"><i class="fa-solid fa-headset"></i> Dialer & Ledger</div>
-                    <div @click="view = 'upload'" :class="view === 'upload' ? 'text-blue-400' : 'text-slate-500'" class="flex items-center gap-3 cursor-pointer"><i class="fa-solid fa-file-import"></i> Bulk Upload</div>
+            <!-- Sidebar -->
+            <aside class="w-64 glass border-r border-slate-800 flex flex-col shrink-0">
+                <div class="p-8">
+                    <div class="text-blue-500 font-black text-[10px] uppercase tracking-widest mb-1 italic">Mafanyolle</div>
+                    <div class="text-xl font-800 text-white tracking-tighter uppercase leading-none">Recoveries</div>
+                </div>
+
+                <!-- Agent Status -->
+                <div class="px-6 mb-8 text-center">
+                    <label class="text-[9px] font-black text-slate-500 uppercase tracking-widest block mb-2">My Shift Status</label>
+                    <select v-model="agentStatus" @change="updateStatus" class="w-full bg-slate-900 border border-slate-800 p-3 rounded-xl text-xs font-bold outline-none text-white">
+                        <option value="Ready">Ready</option>
+                        <option value="Lunch">Lunch</option>
+                        <option value="Tea">Tea Break</option>
+                        <option value="Admin">Admin</option>
+                        <option value="Comfort">Comfort</option>
+                    </select>
+                </div>
+
+                <nav class="flex-1 px-4 space-y-2 uppercase text-[10px] font-bold tracking-widest">
+                    <div @click="view = 'ledger'" :class="view === 'ledger' ? 'sidebar-active text-white' : 'text-slate-500'" class="px-4 py-3 rounded-r-lg flex items-center gap-3 cursor-pointer">
+                        <i class="fa-solid fa-headset"></i> Dialer & Matters
+                    </div>
+                    <div @click="view = 'upload'" :class="view === 'upload' ? 'sidebar-active text-white' : 'text-slate-500'" class="px-4 py-3 rounded-r-lg flex items-center gap-3 cursor-pointer">
+                        <i class="fa-solid fa-file-import"></i> Bulk Upload
+                    </div>
                 </nav>
-                <button @click="logout" class="text-slate-500 hover:text-red-500 font-bold text-xs uppercase flex items-center gap-2 border-t border-slate-800 pt-6"><i class="fa-solid fa-power-off"></i> Logout</button>
+
+                <div class="p-6 border-t border-slate-800">
+                    <button @click="logout" class="text-slate-500 hover:text-red-500 font-bold text-xs uppercase flex items-center gap-2"><i class="fa-solid fa-power-off"></i> Logout</button>
+                </div>
             </aside>
 
-            <main class="flex-1 flex flex-col min-w-0 bg-slate-950 overflow-hidden">
-                <header class="h-20 border-b border-slate-800 flex items-center justify-between px-8 shrink-0">
+            <!-- Main Work Area -->
+            <main class="flex-1 flex flex-col min-w-0 bg-slate-950 overflow-hidden relative">
+                <header class="h-20 border-b border-slate-800 flex items-center justify-between px-8 bg-slate-950/50 backdrop-blur-md">
                     <div class="flex items-center gap-4 flex-1">
                         <i class="fa-solid fa-search text-slate-500"></i>
                         <input v-model="search" type="text" placeholder="Search Master Ledger..." class="bg-transparent outline-none w-full text-sm">
                     </div>
-                    <button @click="showAdd = true" class="bg-white text-black px-5 py-2 rounded-lg font-bold text-[10px] uppercase tracking-widest">+ Add Case</button>
+                    <div class="flex items-center gap-6">
+                        <div class="text-[10px] font-black uppercase text-emerald-500 tracking-widest">Recovered: R{{ formatMoney(totalCollected) }}</div>
+                        <button @click="showAdd = true" class="bg-white text-black px-4 py-2 rounded-lg font-bold text-[10px] uppercase tracking-widest hover:bg-blue-600 hover:text-white transition">+ Add Case</button>
+                    </div>
                 </header>
 
                 <div v-if="view === 'ledger'" class="flex-1 overflow-y-auto p-8">
-                    <div class="grid grid-cols-3 gap-6 mb-8 text-center uppercase tracking-widest">
+                    <!-- Stats Cards -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 text-center uppercase tracking-widest">
                         <div class="glass p-5 rounded-2xl border-l-4 border-l-blue-600">
-                            <div class="text-[9px] font-bold text-slate-500 mb-1">Total Liability</div>
+                            <div class="text-[9px] font-bold text-slate-500">Book Liability</div>
                             <div class="text-xl font-bold font-mono">R {{ formatMoney(totalDebt) }}</div>
                         </div>
-                        <div class="glass p-5 rounded-2xl border-l-4 border-l-emerald-500">
-                            <div class="text-[9px] font-bold text-emerald-500 mb-1">Collected</div>
-                            <div class="text-x
+                        <div class="glass p-5 rounded-2xl border-l-4 border-l-emerald-500 text-emerald-500">
+                            <div class="text-[9px] font-bold">Total Collected</div>
+                            <div class="text-xl font-bold font-mono">R {{ formatMoney(totalCollected) }}</div>
+                        </div>
+                        <div class="glass p-5 rounded-2xl border-l-4 border-l-red-600 text-red-500">
+                            <div class="text-[9px] font-bold">Breached PTPs</div>
+                            <div class="text-xl font-bold font-mono">R {{ formatMoney(overdueDebt) }}</div>
+                        </div>
+                    </div>
+
+                    <!-- Ledger Table -->
+                    <div class="glass rounded-2xl overflow-hidden border border-slate-800">
+                        <table class="w-full text-left">
+                            <thead class="bg-slate-900/80 text-slate-500 text-[10px] font-black uppercase tracking-widest border-b border-slate-800">
+                                <tr>
+                                    <th class="p-4">Matter</th>
+                                    <th class="p-4 text-center">Reference</th>
+                                    <th class="p-4 text-center">Liability</th>
+                                    <th class="p-4 text-center">Status</th>
+                                    <th class="p-4 text-right">Ops</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-800 text-xs">
+                                <tr v-for="d in filteredDebtors" :key="d.id" class="hover:bg-white/5">
+                                    <td class="p-4">
+                                        <div class="font-bold uppercase text-white">{{ d.name }}</div>
+                                        <div class="text-[10px] text-blue-500 font-bold tracking-tighter">{{ d.phone || '---' }}</div>
+                                    </td>
+                                    <td class="p-4 text-center font-bold text-slate-500 uppercase">{{ d.ref_number || '---' }}</td>
+                                    <td class="p-4 text-center font-mono font-bold text-blue-400">R {{ formatMoney(d.total_debt) }}</td>
+                                    <td class="p-4 text-center font-bold">
+                                        <span v-if="isOverdue(d.due_date)" class="text-red-500 animate-pulse tracking-tighter">BREACH: {{ d.due_date }}</span>
+                                        <span v-else class="text-slate-500 tracking-tighter">{{ d.due_date || 'NONE' }}</span>
+                                    </td>
+                                    <td class="p-4 text-right space-x-2">
+                                        <button @click="initiateCall(d)" class="bg-emerald-600 text-white p-2 rounded-lg transition"><i class="fa-solid fa-phone text-[10px]"></i></button>
+                                        <button @click="workAccount(d)" class="bg-slate-800 hover:bg-white hover:text-black px-3 py-2 rounded-lg font-black text-[9px] uppercase tracking-widest transition">Work</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- VIEW: BULK UPLOAD -->
+                <div v-if="view === 'upload'" class="flex-1 flex items-center justify-center p-20 text-center">
+                    <div class="glass p-12 rounded-[50px] border-2 border-dashed border-slate-700 w-full max-w-lg">
+                        <i class="fa-solid fa-file-csv text-6xl text-blue-600 mb-6"></i>
+                        <h2 class="text-2xl font-800 uppercase tracking-tighter mb-4 italic">Bulk Upload Matters</h2>
+                        <input type="file" @change="handleFileUpload" accept=".csv" class="hidden" id="fileBtn">
+                        <label for="fileBtn" class="bg-blue-600 px-8 py-4 rounded-2xl font-bold uppercase tracking-widest text-xs cursor-pointer hover:bg-blue-500 transition">Select CSV File</label>
+                    </div>
+                </div>
+            </main>
+
+            <!-- DIALER (TELEPHONY) -->
+            <aside v-if="dialerVisible" class="w-80 glass border-l border-slate-800 p-6 flex flex-col shrink-0">
+                <div class="flex justify-between items-center mb-10"><h3 class="text-[10px] font-black uppercase text-blue-500 italic">Dialer Suite</h3><button @click="dialerVisible = false"><i class="fa-solid fa-xmark text-slate-500"></i></button></div>
+                <div class="bg-black rounded-[40px] p-6 border border-slate-800 mb-8 text-center h-48 flex flex-col justify-center">
+                    <div class="text-[10px] uppercase font-bold tracking-widest mb-2" :class="onCall ? 'text-emerald-500 animate-pulse' : 'text-slate-600'">{{ onCall ? 'Line Active' : 'Ready' }}</div>
+                    <div class="text-2xl font-black text-white font-mono tracking-tighter italic">{{ dialerNumber || '0000000000' }}</div>
+                    <div v-if="onCall" class="text-lg font-mono text-emerald-500 font-bold mt-2">{{ callTimer }}</div>
+                </div>
+                <div class="flex justify-center gap-6 mt-auto">
+                    <button v-if="!onCall" @click="startCall" class="w-16 h-16 bg-emerald-600 rounded-full flex items-center justify-center text-white text-2xl hover:bg-emerald-500 transition"><i class="fa-solid fa-phone"></i></button>
+                    <button v-else @click="endCall" class="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center text-white text-2xl hover:bg-red-500 transition"><i class="fa-solid fa-phone-slash"></i></button>
+                </div>
+            </aside>
+        </div>
+
+        <!-- FULL-SCREEN WORK STATION -->
+        <div v-if="activeCase" class="fixed inset-0 bg-slate-950 flex flex-col z-[100]">
+            <div class="h-20 glass border-b border-slate-800 flex items-center justify-between px-10 shrink-0">
+                <div class="flex items-center gap-6">
+                    <div class="bg-blue-600 px-3 py-1 rounded text-[10px] font-black uppercase italic">Working Account</div>
+                    <h2 class="text-2xl font-800 uppercase text-white tracking-tighter italic">{{ activeCase.name }}</h2>
+                </div>
+                <button @click="activeCase = null"><i class="fa-solid fa-circle-xmark text-3xl text-slate-500 hover:text-white transition"></i></button>
+            </div>
+            <div class="flex-1 flex overflow-hidden">
+                <div class="w-1/2 p-10 border-r border-slate-800 overflow-y-auto bg-slate-950">
+                    <h3 class="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-6 border-b border-blue-500/20 pb-2">Interaction Logs</h3>
+                    <div class="space-y-4">
+                        <div v-for="log in (activeCase.work_history || []).slice().reverse()" class="bg-slate-900/50 p-4 rounded-xl border border-slate-800">
+                            <div class="flex justify-between text-[10px] font-bold mb-1 uppercase tracking-widest"><span class="text-blue-500">{{ log.outcome }}</span><span class="text-slate-600 italic">{{ log.date }}</span></div>
+                            <p class="text-sm text-slate-300 italic">{{ log.note }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="w-1/2 p-10 space-y-6 overflow-y-auto bg-slate-900/10 flex flex-col">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-[10px] font-bold text-slate-500 uppercase block mb-1">Outcome Code</label>
+                            <select v-model="workForm.outcome" class="w-full bg-slate-900 border border-slate-700 p-4 rounded-xl text-xs font-bold text-white outline-none">
+                                <option value="PTP">Promise to Pay (PTP)</option>
+                                <option value="PAID_UP">Account Paid Up (PU)</option>
+                                <option value="PYMT_RCVD">Payment Received</option>
+                                <option value="STAT_REQ">Statement Requested</option>
+                                <option value="REFUSAL">Refuse to Pay (RTP)</option>
+                                <option value="INT_NOTE">Internal Note</option>
+                            </select>
+                        </div>
+                        <div v-if="workForm.outcome === 'PTP' || activeCase.due_date">
+                            <label class="text-[10px] font-bold text-slate-500 uppercase block mb-1">Calendar Date</label>
+                            <input v-model="workForm.dueDate" type="date" class="w-full bg-slate-900 border border-slate-800 p-4 rounded-xl text-xs font-bold text-white outline-none">
+                        </div>
+                    </div>
+                    <div v-if="workForm.outcome === 'PYMT_RCVD'">
+                        <label class="text-[10px] font-bold text-emerald-500 uppercase block mb-1">Recaptured (R)</label>
+                        <input v-model="workForm.paymentAmount" type="number" class="w-full bg-emerald-900/10 border border-emerald-500 p-4 rounded-xl text-sm font-bold text-white outline-none">
+                    </div>
+                    <textarea v-model="workForm.note" class="flex-1 bg-slate-900 border border-slate-800 p-5 rounded-xl text-sm text-white outline-none resize-none italic" placeholder="Enter collection interaction details..."></textarea>
+                    <button @click="submitWork" class="w-full bg-blue-600 p-6 rounded-2xl font-black uppercase text-xs tracking-widest transition shadow-2xl">Confirm Outcome Update</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ADD MODAL -->
+        <div v-if="showAdd" class="fixed inset-0 bg-black/95 flex items-center justify-center p-4 z-[110]">
+            <div class="glass p-10 rounded-[40px] w-full max-w-2xl border border-slate-800 shadow-2xl">
+                <h2 class="text-2xl font-800 text-white uppercase tracking-tighter mb-8 italic">New Matter Intake</h2>
+                <div class="grid grid-cols-2 gap-4 mb-8 text-left text-slate-300">
+                    <input v-model="addForm.name" placeholder="Matter Name" class="bg-slate-900 border border-slate-800 p-4 rounded-xl text-xs text-white">
+                    <input v-model="addForm.phone" placeholder="Phone Number" class="bg-slate-900 border border-slate-800 p-4 rounded-xl text-xs text-white">
+                    <input v-model="addForm.id_number" placeholder="ID Number" class="bg-slate-900 border border-slate-800 p-4 rounded-xl text-xs text-white">
+                    <input v-model="addForm.ref_number" placeholder="Reference" class="bg-slate-900 border border-slate-800 p-4 rounded-xl text-xs text-white">
+                    <input v-model="addForm.book_name" placeholder="Portfolio" class="bg-slate-900 border border-slate-800 p-4 rounded-xl text-xs text-white">
+                    <input v-model="addForm.total_debt" type="number" placeholder="Balance (R)" class="bg-slate-900 border border-slate-800 p-4 rounded-xl text-xs text-white">
+                </div>
+                <div class="flex gap-4">
+                    <button @click="saveDebtor" class="flex-1 bg-blue-600 p-4 rounded-xl font-bold text-xs uppercase tracking-widest transition">Add</button>
+                    <button @click="showAdd = false" class="flex-1 bg-slate-800 text-slate-500 p-4 rounded-xl font-bold text-xs uppercase tracking-widest transition">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- REQUIRED SCRIPTS -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/papaparse/5.3.2/papaparse.min.js"></script>
+
+    <script>
+        const S_URL = 'https://idxtnkisgqucufafjidv.supabase.co';
+        const S_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkeHRua2lzZ3F1Y3VmYWZqaWR2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODczMjI2MTEsImV4cCI6MjEwMjg5ODYxMX0.Oi0_qsMfQUbE3V5uoi1VOSjPwks41xy65tG77v_ICyc';
+        
+        try {
+            const client = supabase.createClient(S_URL, S_KEY);
+            const { createApp } = Vue;
+
+            createApp({
+                data() {
+                    return {
+                        user: null, loginEmail: '', debtors: [], search: '', showAdd: false, activeCase: null, view: 'ledger',
+                        addForm: { name: '', id_number: '', phone: '', ref_number: '', book_name: '', total_debt: 0 },
+                        workForm: { outcome: 'INTERNAL_NOTE', note: '', dueDate: '', paymentAmount: 0 },
+                        dialerVisible: false, onCall: false, dialerNumber: '', callTimer: '00:00', callInterval: null, seconds: 0,
+                        agentStatus: 'Ready'
+                    }
+                },
+                computed: {
+                    filteredDebtors() {
+                        const s = this.search.toLowerCase();
+                        return this.debtors.filter(d => (d.name || '').toLowerCase().includes(s) || (d.ref_number || '').toLowerCase().includes(s));
+                    },
+                    totalDebt() { return this.debtors.reduce((s, d) => s + parseFloat(d.total_debt || 0), 0); },
+                    totalCollected() { return this.debtors.reduce((s, d) => s + parseFloat(d.collected_amount || 0), 0); },
+                    overdueDebt() { return this.debtors.filter(d => this.isOverdue(d.due_date)).reduce((s, d) => s + parseFloat(d.total_debt || 0), 0); }
+                },
+                async mounted() {
+                    const { data: { session } } = await client.auth.getSession();
+                    if (session) { this.user = session.user; this.load(); }
+                },
+                methods: {
+                    formatMoney(v) { return parseFloat(v).toLocaleString('en-ZA', { minimumFractionDigits: 2 }); },
+                    async login() {
+                        const pass = prompt("Enter Intelligence Password:");
+                        if (!pass) return;
+                        const { data, error } = await client.auth.signInWithPassword({ email: this.loginEmail, password: pass });
+                        if (error) alert("Denied: " + error.message); else { this.user = data.user; this.load(); }
+                    },
+                    async logout() { await client.auth.signOut(); window.location.reload(); },
+                    async load() {
+                        const { data, error } = await client.from('debtors').select('*').order('created_at', { ascending: false });
+                        this.debtors = data || [];
+                    },
+                    async updateStatus() {
+                        await client.from('agent_logs').insert([{ user_id: this.user.id, status: this.agentStatus }]);
+                    },
+                    async handleFileUpload(event) {
+                        const file = event.target.files[0];
+                        if(!file) return;
+                        Papa.parse(file, {
+                            header: true,
+                            complete: async (results) => {
+                                const cleanData = results.data.map(r => ({
+                                    name: r.name, phone: r.phone, id_number: r.id_number, ref_number: r.ref_number,
+                                    book_name: r.book_name, total_debt: parseFloat(r.total_debt) || 0, user_id: this.user.id
+                                })).filter(r => r.name);
+                                await client.from('debtors').insert(cleanData);
+                                this.load(); this.view = 'ledger';
+                            }
+                        });
+                    },
+                    initiateCall(d) { this.dialerVisible = true; this.dialerNumber = d.phone; this.activeCase = d; },
+                    startCall() {
+                        this.onCall = true; this.seconds = 0;
+                        this.callInterval = setInterval(() => { this.seconds++; const m = Math.floor(this.seconds/60).toString().padStart(2,'0'); const s = (this.seconds%60).toString().padStart(2,'0'); this.callTimer = `${m}:${s}`; }, 1000);
+                    },
+                    endCall() {
+                        this.onCall = false; clearInterval(this.callInterval); this.workAccount(this.activeCase); this.workForm.note = `Talk Time: ${this.callTimer}. `;
+                    },
+                    workAccount(d) {
+                        this.activeCase = d;
+                        this.workForm = { outcome: 'INTERNAL_NOTE', note: '', dueDate: d.due_date || '', paymentAmount: 0 };
+                    },
+                    async saveDebtor() {
+                        const { error } = await client.from('debtors').insert([{ ...this.addForm, user_id: this.user.id }]);
+                        if (error) alert(error.message); else { this.showAdd = false; this.load(); }
+                    },
+                    async submitWork() {
+                        if(!this.workForm.note) return alert("Note required");
+                        const log = { date: new Date().toLocaleString('en-ZA'), outcome: this.workForm.outcome, note: this.workForm.note };
+                        const history = [...(this.activeCase.work_history || []), log];
+                        let up = { work_history: history, last_outcome: this.workForm.outcome };
+                        if (this.workForm.outcome === 'PYMT_RCVD') {
+                            up.collected_amount = (parseFloat(this.activeCase.collected_amount) || 0) + parseFloat(this.workForm.paymentAmount);
+                            up.total_debt = parseFloat(this.activeCase.total_debt) - parseFloat(this.workForm.paymentAmount);
+                        }
+                        if (this.workForm.outcome === 'PTP') up.due_date = this.workForm.dueDate;
+                        if (this.workForm.outcome === 'PAID_UP') { up.total_debt = 0; up.due_date = null; }
+                        await client.from('debtors').update(up).eq('id', this.activeCase.id);
+                        this.activeCase = null; this.load();
+                    },
+                    isOverdue(date) { if (!date) return false; return new Date(date) < new Date().setHours(0,0,0,0); }
+                }
+            }).mount('#app');
+        } catch (e) {
+            console.error("Critical Crash:", e);
+        }
+    </script>
+</body>
+</html>
