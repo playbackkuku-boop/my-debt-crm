@@ -2,199 +2,205 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Mafanyolle Recoveries | Absolute Suite v17</title>
+    <title>Mafanyolle Recoveries | Absolute Suite v18</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&family=JetBrains+Mono&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #020617; color: #f1f5f9; height: 100vh; overflow: hidden; }
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;900&display=swap');
+        body { font-family: 'Outfit', sans-serif; background-color: #020617; color: #f1f5f9; height: 100vh; overflow: hidden; }
+        .excalibur-bg { background-image: linear-gradient(rgba(2, 6, 23, 0.96), rgba(2, 6, 23, 0.96)), url('https://images.unsplash.com/photo-1554224155-169641357599?q=80&w=2000&auto=format&fit=crop'); background-size: cover; background-position: center; }
         .glass { background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(59, 130, 246, 0.2); backdrop-filter: blur(25px); }
         .sidebar-active { background: rgba(59, 130, 246, 0.2); border-left: 4px solid #3b82f6; color: white; }
-        .btn-primary { background-color: #0070c0; color: white; font-weight: 800; text-transform: uppercase; font-size: 10px; padding: 10px 20px; border-radius: 4px; }
-        .header-strip { background-color: #002d5b; border-bottom: 3px solid #0070c0; }
+        .header-blue { background-color: #002d5b; border-bottom: 3px solid #0070c0; }
         .accordion-bar { background: white; color: #334155; border: 1px solid #e2e8f0; cursor: pointer; padding: 12px 20px; font-weight: 700; font-size: 11px; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; }
         [v-cloak] { display: none; }
     </style>
 </head>
-<body class="bg-slate-950 text-sm">
+<body class="excalibur-bg">
     <div id="app" v-cloak class="h-full flex flex-col relative">
-        <audio id="beep" src="https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3"></audio>
         
-        <!-- LOGIN -->
+        <!-- 1. SECURE LOGIN TERMINAL (ONLY THING VISIBLE ON START) -->
         <div v-if="!user" class="min-h-screen flex items-center justify-center p-4">
-            <div class="glass p-12 rounded-[3.5rem] w-full max-w-md text-center border-t-8 border-blue-600 shadow-2xl">
-                <i class="fa-solid fa-sword text-blue-500 text-6xl mb-6"></i>
-                <h1 class="text-3xl font-900 text-white uppercase italic mb-10 tracking-tighter">Mafanyolle<br>Recoveries</h1>
+            <div class="glass p-12 rounded-[3.5rem] w-full max-w-sm text-center border-t-8 border-blue-600 shadow-2xl animate-in fade-in zoom-in duration-500">
+                <i class="fa-solid fa-shield-halved text-blue-500 text-6xl mb-6"></i>
+                <h1 class="text-3xl font-900 text-white uppercase italic tracking-tighter mb-10 leading-none">Mafanyolle<br>Recoveries</h1>
                 <form @submit.prevent="login" class="space-y-4">
-                    <input v-model="auth.email" type="email" placeholder="Collector ID" class="w-full p-4 bg-slate-950 border border-slate-700 rounded-2xl outline-none focus:border-blue-500 text-white" required>
-                    <input v-model="auth.password" type="password" placeholder="Passkey" class="w-full p-4 bg-slate-950 border border-slate-700 rounded-2xl outline-none focus:border-blue-500 text-white" required>
-                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 p-5 rounded-2xl font-black uppercase text-xs shadow-xl">Initialize Session</button>
+                    <input v-model="auth.email" type="email" placeholder="Collector ID" class="w-full p-4 bg-slate-950 border border-slate-700 rounded-2xl outline-none focus:border-blue-500 text-white text-center" required>
+                    <input v-model="auth.password" type="password" placeholder="Passkey" class="w-full p-4 bg-slate-950 border border-slate-700 rounded-2xl outline-none focus:border-blue-500 text-white text-center" required>
+                    <button type="submit" :disabled="loading" class="w-full bg-blue-600 hover:bg-blue-500 p-5 rounded-2xl font-black uppercase text-xs transition shadow-xl">
+                        {{ loading ? 'Synchronizing...' : 'Initialize Terminal' }}
+                    </button>
                 </form>
             </div>
         </div>
 
-        <!-- MAIN SUITE -->
+        <!-- 2. PROTECTED ENTERPRISE AREA (HIDDEN UNTIL LOGIN) -->
         <template v-else>
-            <!-- TOP NAV -->
-            <header class="h-16 header-strip flex items-center justify-between px-8 z-50 shadow-2xl shrink-0">
+            <!-- Top Navigation -->
+            <header class="h-16 header-blue flex items-center justify-between px-8 z-50 shadow-2xl shrink-0">
                 <div class="flex items-center gap-6">
                     <i class="fa-solid fa-bars text-white cursor-pointer mr-6"></i>
                     <h1 class="text-white font-900 italic tracking-widest text-lg uppercase">Mafanyolle Finance</h1>
-                    <div class="flex items-center gap-4 bg-slate-900/50 px-3 py-1 rounded-lg border border-blue-400/20 ml-6">
+                    <div class="flex items-center gap-4 bg-slate-900/50 px-4 py-1.5 rounded-full border border-blue-400/20 ml-6">
                         <span class="text-[9px] font-black uppercase text-emerald-400 animate-pulse italic">Ready</span>
-                        <span class="font-mono text-blue-400 text-lg border-l border-white/10 pl-4 leading-none">{{ statusTimer }}</span>
+                        <span class="font-mono text-blue-400 text-lg border-l border-white/10 pl-4">{{ statusTimer }}</span>
                     </div>
                 </div>
                 <div class="flex items-center gap-8">
                     <div class="text-right text-white">
-                        <div class="text-[8px] font-black uppercase text-blue-300">Portfolio Recaptured</div>
+                        <div class="text-[8px] font-black uppercase text-blue-300 italic">Portfolio Recaptured</div>
                         <div class="text-xl font-bold font-mono tracking-tighter">R {{ formatMoney(totalCollected) }}</div>
                     </div>
-                    <button v-if="role !== 'collector'" @click="showAdd = true" class="bg-white text-blue-900 px-5 py-2 rounded font-black text-[10px] uppercase shadow-xl hover:bg-blue-500 hover:text-white transition">+ Load Intake</button>
+                    <!-- SUPERVISOR INTAKE BUTTON -->
+                    <button v-if="role !== 'collector'" @click="showAdd = true" class="bg-white text-blue-900 px-5 py-2 rounded font-black text-[10px] uppercase shadow-xl hover:bg-blue-500 hover:text-white transition">+ New Intake</button>
                     <button @click="logout" class="text-white/50 hover:text-white transition"><i class="fa-solid fa-power-off text-xl"></i></button>
                 </div>
             </header>
 
             <div class="flex-1 flex overflow-hidden">
-                <!-- SIDEBAR -->
+                <!-- Sidebar -->
                 <aside class="w-64 glass border-r border-blue-900/20 flex flex-col p-4 shrink-0">
                     <div class="flex-1 space-y-2 mt-4 text-slate-400 uppercase font-black text-[10px] tracking-[0.2em]">
-                        <button @click="view = 'dashboard'" :class="view === 'dashboard' ? 'sidebar-active text-white' : ''" class="w-full flex items-center gap-4 px-4 py-4 rounded-2xl"><i class="fa-solid fa-chart-line text-lg"></i> <span>Dashboard</span></button>
-                        <button @click="view = 'pool'" :class="view === 'pool' ? 'sidebar-active text-white' : ''" class="w-full flex items-center gap-4 px-4 py-4 rounded-2xl"><i class="fa-solid fa-database text-lg"></i> <span>Global Pool</span></button>
                         <button @click="view = 'work'" :class="view === 'work' ? 'sidebar-active text-white' : ''" class="w-full flex items-center gap-4 px-4 py-4 rounded-2xl"><i class="fa-solid fa-headset text-lg"></i> <span>Workstation</span></button>
-                        <button @click="view = 'chat'" :class="view === 'chat' ? 'sidebar-active text-white' : ''" class="w-full flex items-center gap-4 px-4 py-4 rounded-2xl"><i class="fa-solid fa-comments text-lg"></i> <span>Private Chat</span></button>
-                        <button @click="view = 'monitoring'" v-if="role !== 'collector'" :class="view === 'monitoring' ? 'sidebar-active text-white' : ''" class="w-full flex items-center gap-4 px-4 py-4 rounded-2xl text-amber-500"><i class="fa-solid fa-tower-broadcast text-lg"></i> <span>Team Monitor</span></button>
+                        <button @click="view = 'chat'" :class="view === 'chat' ? 'sidebar-active text-white' : ''" class="w-full flex items-center gap-4 px-4 py-4 rounded-2xl"><i class="fa-solid fa-comments text-lg"></i> <span>Secure Chat</span></button>
+                        <button @click="view = 'monitoring'" v-if="role !== 'collector'" :class="view === 'monitoring' ? 'sidebar-active text-white' : ''" class="w-full flex items-center gap-4 px-4 py-4 rounded-2xl text-amber-500"><i class="fa-solid fa-tower-broadcast text-lg"></i> <span>Floor Monitor</span></button>
                     </div>
                 </aside>
 
-                <!-- WORKSPACE -->
+                <!-- Workspace -->
                 <main class="flex-1 flex flex-col min-w-0 bg-[#f1f5f9] text-slate-900 overflow-hidden relative">
                     
-                    <!-- VIEW: DASHBOARD (Analytic Screen) -->
-                    <div v-if="view === 'dashboard'" class="flex-1 p-8 overflow-y-auto animate-in fade-in duration-500">
-                        <h2 class="text-3xl font-900 uppercase text-blue-900 tracking-tighter mb-8 italic italic">Finance Center Overview</h2>
-                        <div class="grid grid-cols-4 gap-6 mb-10">
-                            <div class="bg-white p-6 rounded shadow border-t-4 border-blue-600"><p class="text-[9px] font-black uppercase text-slate-400">Total Book Value</p><p class="text-2xl font-black italic italic italic">R {{ formatMoney(totalDebt) }}</p></div>
-                            <div class="bg-white p-6 rounded shadow border-t-4 border-emerald-500"><p class="text-[9px] font-black uppercase text-slate-400">Recaptured Today</p><p class="text-2xl font-black text-emerald-600 italic italic italic">R {{ formatMoney(totalCollected) }}</p></div>
-                            <div class="bg-white p-6 rounded shadow border-t-4 border-red-500"><p class="text-[9px] font-black uppercase text-slate-400">Breached PTPs</p><p class="text-2xl font-black text-red-600 italic italic italic">14</p></div>
-                            <div class="bg-white p-6 rounded shadow border-t-4 border-amber-500"><p class="text-[9px] font-black uppercase text-slate-400">Total Matters</p><p class="text-2xl font-black italic italic italic">{{ debtors.length }}</p></div>
-                        </div>
-                        <div class="bg-white p-8 rounded shadow border h-64"><h3 class="font-black text-xs uppercase mb-4 text-slate-500 tracking-widest">Recapture Performance Graph</h3><div id="chart"></div></div>
-                    </div>
-
-                    <!-- VIEW: POOL (New Matters Screen) -->
-                    <div v-if="view === 'pool'" class="flex-1 p-8 overflow-y-auto animate-in fade-in duration-500">
-                        <div class="flex justify-between items-end mb-8">
-                            <div><h2 class="text-3xl font-900 uppercase text-blue-900 tracking-tighter italic">General Intake Pool</h2><p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Select an unassigned matter to begin recovery</p></div>
-                        </div>
-                        <div class="grid grid-cols-3 gap-6">
-                            <div v-for="m in pool" :key="m.id" class="bg-white p-8 rounded-3xl shadow-lg border-b-8 border-blue-600 hover:scale-105 transition-all">
-                                <div class="flex justify-between mb-4"><span class="font-mono text-blue-600 font-bold">{{ m.ref_number }}</span><span class="text-[9px] font-black bg-slate-100 px-2 py-0.5 rounded text-slate-400">AVAILABLE</span></div>
-                                <h3 class="text-2xl font-black uppercase text-slate-800 tracking-tighter mb-4">{{ m.name }}</h3>
-                                <div class="flex justify-between items-center"><div class="text-xl font-black italic">R {{ formatMoney(m.total_debt) }}</div><button @click="pullMatter(m)" class="bg-[#0070c0] text-white px-6 py-2 rounded font-black text-[10px] uppercase">Pull Matter</button></div>
+                    <!-- START SCREEN: MATTER LOOKUP -->
+                    <div v-if="!activeMatter" class="h-full flex items-center justify-center p-6">
+                        <div class="bg-white p-12 rounded-[2rem] shadow-2xl border w-full max-w-2xl text-center">
+                            <i class="fa-solid fa-magnifying-glass-chart text-8xl text-slate-100 mb-6"></i>
+                            <h2 class="text-2xl font-900 uppercase text-blue-900 tracking-tighter mb-2">Verification Lookup</h2>
+                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-10 italic">Secure search by Ref, ID or account no.</p>
+                            <div class="relative w-full max-w-lg mx-auto">
+                                <input v-model="searchQuery" @keyup.enter="searchMatter" class="w-full p-6 bg-slate-50 border border-slate-300 rounded-full outline-none text-center text-lg shadow-inner focus:border-blue-500" placeholder="Enter Reference...">
+                                <button @click="searchMatter" class="absolute right-3 top-1/2 -translate-y-1/2 bg-blue-600 text-white px-8 py-3 rounded-full font-black uppercase text-[10px]">Search</button>
                             </div>
                         </div>
                     </div>
 
-                    <!-- VIEW: WORKSTATION (Individual Screen) -->
-                    <div v-if="view === 'work'" class="flex-1 flex flex-col p-8 overflow-hidden animate-in slide-in-from-bottom duration-500">
-                        <div v-if="!activeMatter" class="h-full flex items-center justify-center opacity-30 italic"><i class="fa-solid fa-search text-9xl mr-8"></i><h2 class="text-3xl font-black uppercase tracking-[0.5em]">Workstation Ready. Search Ref.</h2></div>
-                        
-                        <div v-else class="h-full flex flex-col overflow-hidden bg-white border rounded shadow-2xl">
-                            <!-- TOP STRIP -->
-                            <div class="bg-slate-50 p-6 border-b-2 border-blue-600 flex justify-between items-center">
-                                <div class="flex items-center gap-6"><div class="w-14 h-14 bg-amber-500 rounded-full flex items-center justify-center text-white text-3xl shadow-lg"><i class="fa-solid fa-user"></i></div><div><h2 class="text-2xl font-black uppercase text-blue-900 tracking-tighter">{{ activeMatter.name }}</h2><div class="text-[11px] font-black text-amber-600 uppercase tracking-widest italic">{{ activeMatter.id_number }}</div></div></div>
-                                <div class="text-right"><div class="text-[11px] font-black text-slate-400 uppercase">Balance Due</div><div class="text-4xl font-black text-slate-800 italic italic">R {{ formatMoney(activeMatter.total_debt) }}</div></div>
+                    <!-- MATTER WORKING PANEL (Matched to Screenshot 1) -->
+                    <div v-else class="h-full flex flex-col animate-in slide-in-from-bottom duration-500 bg-[#f8fafc]">
+                        <div class="bg-white p-6 border-b-2 border-blue-600 flex justify-between items-center shadow-lg shrink-0">
+                            <div class="flex items-center gap-6">
+                                <div class="w-14 h-14 bg-amber-500 rounded-full flex items-center justify-center text-white text-2xl shadow-lg"><i class="fa-solid fa-user"></i></div>
+                                <div>
+                                    <h2 class="text-2xl font-black uppercase text-blue-900 leading-none">{{ activeMatter.name }}</h2>
+                                    <div class="text-[11px] font-black text-amber-600 uppercase tracking-widest mt-1">{{ activeMatter.id_number }} (ME)</div>
+                                </div>
                             </div>
-                            <!-- MAIN SPLIT -->
-                            <div class="flex-1 flex overflow-hidden">
-                                <div class="w-3/4 overflow-y-auto bg-[#eef2f6] border-r">
-                                    <div class="bg-[#0070c0] text-white p-3 font-black text-center text-xl uppercase tracking-[0.2em]">Verify & interaction History</div>
-                                    <div class="p-6">
-                                        <div class="accordion-bar" @click="uiTab = 'details'"><span>Contact Info</span><i class="fa-solid fa-address-book text-blue-500"></i></div>
-                                        <div v-if="uiTab === 'details'" class="p-8 bg-white border-x grid grid-cols-3 gap-8 text-xs font-black uppercase">
-                                            <div><p class="text-slate-400 mb-2">Phone</p><p class="text-blue-700 text-lg">{{ activeMatter.phone }}</p></div>
-                                            <div><p class="text-slate-400 mb-2">Ref</p><p class="text-slate-900 text-lg">{{ activeMatter.ref_number }}</p></div>
-                                            <div><p class="text-slate-400 mb-2">Tax No</p><p class="text-emerald-600 text-lg">{{ activeMatter.tax_number || '---' }}</p></div>
-                                        </div>
-                                        <div class="accordion-bar border-t" @click="uiTab = 'history'"><span>Action History</span><i class="fa-solid fa-clock-rotate-left text-blue-500"></i></div>
-                                        <div v-if="uiTab === 'history'" class="p-6 bg-white border-x space-y-4 max-h-96 overflow-y-auto">
-                                            <div v-for="log in (activeMatter.work_history || []).slice().reverse()" class="border-l-4 border-blue-500 p-4 bg-slate-50 shadow-sm rounded-r-lg">
-                                                <div class="flex justify-between text-[9px] font-black text-slate-400 uppercase mb-1"><span>{{ log.agent }}</span><span>{{ log.date }}</span></div>
-                                                <p class="text-xs font-bold text-slate-700 italic italic italic">"{{ log.note }}"</p>
+                            <div class="text-right">
+                                <div class="text-[11px] font-black text-slate-400 uppercase">Remaining Arrears</div>
+                                <div class="text-4xl font-black text-slate-800 italic">R {{ formatMoney(activeMatter.total_debt) }}</div>
+                            </div>
+                        </div>
+
+                        <div class="flex-1 flex overflow-hidden">
+                            <!-- Left Detail Accordion (Verify Area) -->
+                            <div class="w-3/4 overflow-y-auto bg-[#eef2f6] border-r custom-scroll">
+                                <div class="bg-[#0070c0] text-white p-3 font-black text-center text-2xl uppercase tracking-[0.3em]">Verify Details</div>
+                                
+                                <div class="p-6 space-y-4">
+                                    <div class="bg-white border rounded overflow-hidden shadow-sm">
+                                        <div class="accordion-bar" @click="uiTab = 'history'"><span>Action History</span><i class="fa-solid fa-history text-blue-500"></i></div>
+                                        <div v-if="uiTab === 'history'" class="p-6 bg-slate-50 space-y-4 animate-in fade-in">
+                                            <div v-for="log in (activeMatter.work_history || []).slice().reverse()" class="border-l-4 border-blue-500 bg-white p-4 shadow-sm rounded-r-lg">
+                                                <div class="flex justify-between text-[9px] font-black text-slate-400 uppercase"><span>{{ log.agent }}</span><span>{{ log.date }}</span></div>
+                                                <p class="text-xs font-bold text-slate-700 italic">"{{ log.note }}"</p>
                                             </div>
                                         </div>
-                                        <div class="accordion-bar border-t" @click="uiTab = 'docs'"><span>Evidence / Document Vault</span><i class="fa-solid fa-file-invoice text-red-500"></i></div>
-                                        <div v-if="uiTab === 'docs'" class="p-6 bg-white border-x grid grid-cols-2 gap-4">
-                                            <div class="bg-blue-50 p-6 rounded-2xl border border-dashed border-blue-300 text-center">
-                                                <input type="file" @change="uploadDoc" class="text-xs mb-4">
-                                                <p class="text-[9px] font-black uppercase text-blue-500">Attach PoP or Death Cert</p>
+
+                                        <div class="accordion-bar border-t" @click="uiTab = 'details'"><span>Contact & Tax Details</span><i class="fa-solid fa-address-card text-blue-500"></i></div>
+                                        <div v-if="uiTab === 'details'" class="p-8 grid grid-cols-3 gap-8 bg-slate-50 text-[10px] font-black uppercase text-slate-500">
+                                            <div><p class="opacity-50 mb-2">Direct Phone</p><p class="text-blue-700 text-lg">{{ activeMatter.phone }}</p></div>
+                                            <div><p class="opacity-50 mb-2">Matter Ref</p><p class="text-slate-900 text-lg">{{ activeMatter.ref_number }}</p></div>
+                                            <div><p class="opacity-50 mb-2">Portfolio</p><p class="text-emerald-600 text-lg">{{ activeMatter.book_name || 'GENERAL' }}</p></div>
+                                        </div>
+
+                                        <div class="accordion-bar border-t" @click="uiTab = 'docs'"><span>Evidence / Document Vault</span><i class="fa-solid fa-file-pdf text-red-500"></i></div>
+                                        <div v-if="uiTab === 'docs'" class="p-6 bg-slate-50 grid grid-cols-2 gap-4">
+                                            <div class="bg-white border-2 border-dashed border-blue-300 p-4 rounded-xl text-center">
+                                                <input type="file" @change="uploadDoc" class="text-[10px] mb-2">
+                                                <p class="text-[8px] font-black text-blue-500 uppercase">Attach Death Cert / PoP</p>
                                             </div>
-                                            <div v-for="doc in activeMatter.documents" class="flex justify-between p-3 border rounded items-center bg-slate-50 font-bold uppercase text-[10px]">
-                                                <span>{{ doc.name }}</span><a :href="doc.url" target="_blank" class="text-blue-500"><i class="fa-solid fa-download"></i></a>
+                                            <div v-for="doc in activeMatter.documents" class="flex justify-between p-3 border rounded bg-white items-center">
+                                                <span class="text-[9px] font-black truncate uppercase">{{ doc.name }}</span>
+                                                <a :href="doc.url" target="_blank" class="text-blue-500"><i class="fa-solid fa-download"></i></a>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-                                <!-- ACTION CONTROL -->
-                                <div class="w-1/4 bg-white p-8 flex flex-col items-center">
-                                    <div class="bg-slate-900 text-blue-400 p-8 rounded-3xl w-full text-center mb-10 shadow-2xl">
-                                        <div class="text-2xl font-mono font-bold mb-6 text-white">{{ activeMatter.phone }}</div>
-                                        <button @click="startCall" class="w-16 h-16 bg-emerald-500 rounded-full text-white text-3xl shadow-xl transition-all hover:scale-110"><i class="fa-solid fa-phone"></i></button>
+                            </div>
+
+                            <!-- Right Telephony/Wrap Column (Matched to Screenshot 2) -->
+                            <div class="w-1/4 bg-white p-8 flex flex-col items-center shadow-2xl">
+                                <div class="bg-slate-950 text-blue-400 p-8 rounded-3xl w-full text-center border border-blue-900/50 mb-10 shadow-2xl">
+                                    <div class="text-[9px] font-black uppercase tracking-[0.3em] mb-4 text-slate-500">Internal Dialer</div>
+                                    <div class="text-2xl font-mono font-bold mb-6 text-white tracking-tighter">{{ activeMatter.phone }}</div>
+                                    <button @click="startCall" class="w-16 h-16 bg-emerald-500 rounded-full text-white text-3xl shadow-xl hover:scale-110 transition-all"><i class="fa-solid fa-phone"></i></button>
+                                </div>
+                                <button @click="showWrap = true" class="w-full bg-[#0070c0] text-white py-5 rounded font-900 uppercase text-[10px] tracking-widest shadow-xl">Capture Interaction</button>
+                                <button @click="activeMatter = null" class="mt-10 text-[9px] font-black text-slate-300 uppercase hover:text-red-500 transition">Return to Search</button>
+                            </div>
+                        </div>
+
+                        <!-- 3. INTERACTION WRAP-UP MODAL (Supervisor Allocation logic) -->
+                        <div v-if="showWrap" class="fixed inset-0 bg-black/95 flex items-center justify-center p-4 z-[500]">
+                            <div class="bg-white w-full max-w-lg p-12 rounded-[4rem] border-t-8 border-blue-600 shadow-2xl text-slate-900 text-left animate-in zoom-in duration-300">
+                                <h2 class="text-3xl font-900 uppercase text-blue-900 italic mb-8">Call Conclusion</h2>
+                                <div class="space-y-6">
+                                    <label class="text-[10px] font-black text-slate-400 uppercase block mb-1">Select Wrap-up Code</label>
+                                    <select v-model="wrapUp.outcome" class="w-full p-4 bg-slate-50 border rounded font-black text-xs uppercase outline-none focus:border-blue-500 transition">
+                                        <option value="PTP">Promise to Pay (PTP)</option>
+                                        <option value="REFUSAL">Refusal to Pay</option>
+                                        <option value="NA">No Answer / Left Message</option>
+                                        <option value="DECEASED">Deceased - Upload Required</option>
+                                        <option v-if="role !== 'collector'" value="PYMT">★ SUPERVISOR: Recapture Payment</option>
+                                    </select>
+
+                                    <!-- ALLOCATION DROPDOWN FOR SUPERVISOR -->
+                                    <div v-if="wrapUp.outcome === 'PYMT'" class="grid grid-cols-2 gap-4 animate-in slide-in-from-right">
+                                        <div><label class="text-[10px] font-black text-emerald-600 uppercase">Allocate to Agent</label>
+                                        <select v-model="wrapUp.agent" class="w-full p-4 bg-slate-50 border rounded text-[10px] font-bold uppercase"><option v-for="a in staff" :value="a.id">{{ a.email }}</option></select></div>
+                                        <div><label class="text-[10px] font-black text-emerald-600 uppercase">Amount (R)</label>
+                                        <input v-model="wrapUp.amount" type="number" class="w-full p-4 bg-slate-50 border rounded text-xs font-bold" placeholder="0.00"></div>
                                     </div>
-                                    <button @click="showWrap = true" class="w-full bg-[#0070c0] text-white py-5 rounded font-900 uppercase text-xs tracking-widest shadow-xl">Capture Outcome</button>
-                                    <button @click="activeMatter = null" class="mt-8 text-[10px] font-black text-slate-300 uppercase hover:text-red-500">Close File</button>
+
+                                    <div v-if="wrapUp.outcome === 'PTP'"><label class="text-[10px] font-black text-blue-600 uppercase">PTP Date</label><input v-model="wrapUp.date" type="date" class="w-full p-4 bg-slate-50 border rounded outline-none font-bold"></div>
+
+                                    <textarea v-model="wrapUp.note" rows="4" class="w-full p-5 bg-slate-50 border rounded text-sm italic italic" placeholder="Enter call narrative..."></textarea>
+                                    <button @click="finalizeInteraction" class="w-full bg-[#0070c0] text-white p-5 rounded font-black uppercase text-[10px] tracking-widest shadow-xl">Commit Interaction</button>
+                                    <button @click="showWrap = false" class="w-full text-[10px] font-black text-slate-300 uppercase mt-4 text-center">Abort Wrap-up</button>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </main>
             </div>
-        </template>
 
-        <!-- CONCLUSION MODAL (Supervisor Recapture logic) -->
-        <div v-if="showWrap" class="fixed inset-0 bg-black/95 flex items-center justify-center p-4 z-[500]">
-            <div class="bg-white w-full max-w-xl p-12 rounded-[4rem] border-t-8 border-blue-600 shadow-2xl text-slate-900 text-left animate-in zoom-in duration-300">
-                <h2 class="text-3xl font-900 uppercase text-blue-900 italic mb-10">Capture Interaction</h2>
-                <div class="space-y-6">
-                    <label class="text-[10px] font-black text-slate-400 uppercase block mb-1">Outcome Result</label>
-                    <select v-model="wrapUp.outcome" class="w-full p-4 bg-slate-50 border rounded font-black uppercase text-xs">
-                        <option value="PTP">Promise to Pay (PTP)</option>
-                        <option value="REFUSAL">Refusal to Pay</option>
-                        <option value="DECEASED">Deceased - Upload Req</option>
-                        <option v-if="role !== 'collector'" value="PYMT">★ SUPERVISOR: Recapture Payment</option>
-                    </select>
-
-                    <div v-if="wrapUp.outcome === 'PYMT'" class="grid grid-cols-2 gap-4 animate-in slide-in-from-right">
-                        <div><label class="text-[10px] font-black text-emerald-600 uppercase">Allocate to Agent</label>
-                        <select v-model="wrapUp.agent" class="w-full p-4 bg-slate-50 border rounded text-xs font-bold"><option v-for="a in staffList" :value="a.id">{{ a.email }}</option></select></div>
-                        <div><label class="text-[10px] font-black text-emerald-600 uppercase">Amount (R)</label>
-                        <input v-model="wrapUp.amount" type="number" class="w-full p-4 bg-slate-50 border rounded text-xs font-bold" placeholder="0.00"></div>
+            <!-- SUPERVISOR INTAKE MODAL (Fixed fields) -->
+            <div v-if="showAdd" class="fixed inset-0 bg-black/95 flex items-center justify-center p-4 z-[600]">
+                <div class="glass p-12 rounded-[4rem] w-full max-w-2xl border-t-8 border-blue-600 shadow-2xl">
+                    <h2 class="text-3xl font-900 text-white uppercase italic tracking-tighter mb-10">New Intake Record</h2>
+                    <div class="grid grid-cols-2 gap-6 mb-10 text-left">
+                        <div v-for="f in intakeFields">
+                            <label class="text-[9px] font-black text-slate-500 uppercase ml-1 mb-2 block">{{f.label}}</label>
+                            <input v-model="addForm[f.key]" :type="f.type || 'text'" class="bg-slate-900 border border-slate-700 p-4 rounded-xl text-xs text-white outline-none w-full">
+                        </div>
                     </div>
-
-                    <div v-if="wrapUp.outcome === 'PTP'"><label class="text-[10px] font-black text-blue-600 uppercase">PTP Date</label>
-                    <input v-model="wrapUp.date" type="date" class="w-full p-4 bg-slate-50 border rounded"></div>
-
-                    <textarea v-model="wrapUp.note" rows="4" class="w-full p-5 bg-slate-50 border rounded text-sm italic italic" placeholder="Interaction narrative..."></textarea>
-                    <button @click="finalizeInteraction" class="w-full bg-[#0070c0] text-white p-5 rounded font-black uppercase text-xs tracking-widest shadow-xl">Submit to Ledger</button>
-                    <button @click="showWrap = false" class="w-full text-[10px] font-black text-slate-300 uppercase mt-4 text-center">Abort Interaction</button>
+                    <div class="flex gap-4">
+                        <button @click="saveMatter" class="flex-1 bg-blue-600 p-5 rounded-2xl font-black text-[10px] uppercase shadow-xl hover:bg-white hover:text-blue-900 transition-all">Load Case</button>
+                        <button @click="showAdd = false" class="flex-1 bg-slate-800 text-slate-500 p-5 rounded-2xl font-black text-[10px] uppercase">Abort</button>
+                    </div>
                 </div>
             </div>
-        </div>
-
-        <!-- INTAKE MODAL -->
-        <div v-if="showAdd" class="fixed inset-0 bg-black/95 flex items-center justify-center p-4 z-[600]">
-            <div class="glass p-12 rounded-[4rem] w-full max-w-2xl border-t-8 border-blue-600 shadow-2xl">
-                <h2 class="text-3xl font-900 text-white uppercase italic tracking-tighter mb-10">New Intake Record</h2>
-                <div class="grid grid-cols-2 gap-6 mb-10 text-left">
-                    <input v-for="(v, k) in addForm" v-model="addForm[k]" :placeholder="k.toUpperCase()" class="bg-slate-900 border border-slate-700 p-4 rounded-xl text-xs text-white outline-none focus:border-blue-500">
-                </div>
-                <div class="flex gap-4"><button @click="saveMatter" class="flex-1 bg-blue-600 p-5 rounded-2xl font-black text-[10px] uppercase shadow-xl hover:bg-white hover:text-blue-900 transition-all">Commit Intake</button><button @click="showAdd = false" class="flex-1 bg-slate-800 text-slate-500 p-5 rounded-2xl font-black text-[10px] uppercase">Abort</button></div>
-            </div>
-        </div>
+        </template>
 
     </div>
 
@@ -207,18 +213,25 @@
         createApp({
             data() {
                 return {
-                    user: null, role: 'collector', loading: false, view: 'dashboard', uiTab: 'history',
+                    user: null, role: 'collector', loading: false, view: 'work', uiTab: 'history',
                     auth: { email: '', password: '' }, searchQuery: '', activeMatter: null,
-                    debtors: [], pool: [], staffList: [],
+                    debtors: [], staff: [],
                     agentStatus: 'Ready', statusSecs: 0, showWrap: false, showAdd: false,
                     wrapUp: { outcome: 'PTP', date: '', note: '', amount: 0, agent: '' },
-                    addForm: { name: '', phone: '', ref_number: '', total_debt: 0, id_number: '', tax_number: '' }
+                    addForm: { name: '', phone: '', ref_number: '', total_debt: 0, id_number: '', book_name: '' },
+                    intakeFields: [
+                        { label: 'Matter Full Name', key: 'name' },
+                        { label: 'ID Number', key: 'id_number' },
+                        { label: 'Ref / Account No', key: 'ref_number' },
+                        { label: 'Contact Phone', key: 'phone' },
+                        { label: 'Portfolio / Book', key: 'book_name' },
+                        { label: 'Balance Due (R)', key: 'total_debt', type: 'number' }
+                    ]
                 }
             },
             computed: {
                 statusTimer() { return new Date(this.statusSecs * 1000).toISOString().substr(11, 8); },
-                totalCollected() { return this.debtors.reduce((s, m) => s + parseFloat(m.collected_amount || 0), 0); },
-                totalDebt() { return this.debtors.reduce((s, m) => s + parseFloat(m.total_debt || 0), 0); }
+                totalCollected() { return this.debtors.reduce((s, m) => s + parseFloat(m.collected_amount || 0), 0); }
             },
             methods: {
                 formatMoney(v) { return new Intl.NumberFormat('en-ZA').format(v || 0); },
@@ -230,25 +243,20 @@
                 async initApp() {
                     const { data: prof } = await client.from('profiles').select('role').eq('id', this.user.id).single();
                     this.role = prof?.role || 'collector';
-                    this.fetchPool(); this.fetchStaff(); this.loadData();
+                    this.showWrap = false; this.showAdd = false; this.activeMatter = null;
                     setInterval(() => { this.statusSecs++; }, 1000);
-                    this.renderChart();
+                    this.loadData();
                 },
                 async searchMatter() {
                     const { data } = await client.from('debtors').select('*').eq('ref_number', this.searchQuery).maybeSingle();
-                    if(data) { this.activeMatter = data; this.searchQuery = ''; }
-                    else alert("Ref not found.");
-                },
-                async pullMatter(m) {
-                    await client.from('debtors').update({ user_id: this.user.id, status: 'assigned' }).eq('id', m.id);
-                    this.activeMatter = m; this.view = 'work';
+                    if(data) { this.activeMatter = data; this.searchQuery = ''; } else alert("File not found.");
                 },
                 async finalizeInteraction() {
                     const hist = [...(this.activeMatter.work_history || []), { date: new Date().toISOString(), agent: this.user.email, outcome: this.wrapUp.outcome, note: this.wrapUp.note }];
                     let up = { work_history: hist, last_outcome: this.wrapUp.outcome };
                     if(this.wrapUp.outcome === 'PYMT') {
-                        up.collected_amount = parseFloat(this.activeMatter.collected_amount||0) + parseFloat(this.wrapUp.amount);
-                        up.user_id = this.wrapUp.agent; -- Allocate payment
+                        up.collected_amount = (parseFloat(this.activeMatter.collected_amount)||0) + parseFloat(this.wrapUp.amount);
+                        up.user_id = this.wrapUp.agent;
                     }
                     await client.from('debtors').update(up).eq('id', this.activeMatter.id);
                     this.showWrap = false; this.activeMatter = null; this.loadData();
@@ -259,25 +267,20 @@
                 },
                 async uploadDoc(e) {
                     const file = e.target.files[0];
-                    const path = `docs/${Date.now()}_${file.name}`;
-                    const { data, error } = await client.storage.from('legal_docs').upload(path, file);
+                    const path = `vault/${this.activeMatter.id}/${Date.now()}_${file.name}`;
+                    const { error } = await client.storage.from('legal_docs').upload(path, file);
                     if(!error) {
                         const { data: { publicUrl } } = client.storage.from('legal_docs').getPublicUrl(path);
                         const docs = [...(this.activeMatter.documents || []), { name: file.name, url: publicUrl }];
                         await client.from('debtors').update({ documents: docs }).eq('id', this.activeMatter.id);
-                        alert("Vault Updated.");
+                        alert("Vault Uploaded.");
                     }
                 },
-                fetchPool() { client.from('debtors').select('*').is('user_id', null).then(({data}) => this.pool = data || []); },
-                fetchStaff() { client.from('profiles').select('*').then(({data}) => this.staffList = data || []); },
-                loadData() { client.from('debtors').select('*').then(({data}) => this.debtors = data || []); },
-                renderChart() {
-                    setTimeout(() => {
-                        const options = { series: [{ name: 'Collections', data: [10, 41, 35, 51, 49, 62, 69] }], chart: { height: 200, type: 'area', toolbar: {show:false} }, dataLabels: { enabled: false }, colors: ['#0070c0'], stroke: { curve: 'smooth' } };
-                        new ApexCharts(document.querySelector("#chart"), options).render();
-                    }, 500);
+                loadData() { 
+                    client.from('debtors').select('*').then(({data}) => this.debtors = data || []); 
+                    client.from('profiles').select('*').then(({data}) => this.staff = data || []);
                 },
-                startCall() { alert("Bridge to VoIP Terminal Active..."); },
+                startCall() { alert("Initiating Telephony Bridge..."); },
                 async logout() { await client.auth.signOut(); window.location.reload(); }
             },
             mounted() {
