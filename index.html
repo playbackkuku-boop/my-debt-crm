@@ -9,7 +9,7 @@
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=JetBrains+Mono&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&family=JetBrains+Mono&display=swap');
         
         [v-cloak] { display: none; }
         body { font-family: 'Inter', sans-serif; background-color: #020617; color: #f1f5f9; }
@@ -19,13 +19,12 @@
             background: rgba(15, 23, 42, 0.7);
             backdrop-filter: blur(12px);
             border: 1px solid rgba(59, 130, 246, 0.2);
-            border-radius: 1.5rem;
         }
 
         .lcd-display {
             background-color: #0a0a0a;
             border: 2px solid #1e293b;
-            box-shadow: inset 0 0 15px #000;
+            box-shadow: inset 0 0 20px #000;
         }
 
         .dial-pad-btn {
@@ -34,171 +33,185 @@
             border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
-        .dial-pad-btn:hover { background: #3b82f6; transform: scale(1.05); }
-        .dial-pad-btn:active { transform: scale(0.95); }
+        .dial-pad-btn:hover {
+            background: #3b82f6;
+            transform: scale(1.05);
+        }
+
+        .dial-pad-btn:active {
+            transform: scale(0.95);
+        }
 
         .btn-call { background: #10b981; box-shadow: 0 0 20px rgba(16, 185, 129, 0.4); }
         .btn-end { background: #ef4444; box-shadow: 0 0 20px rgba(239, 68, 68, 0.4); }
 
         .status-strip {
             border-bottom: 1px solid rgba(59, 130, 246, 0.3);
-            background: rgba(15, 23, 42, 0.9);
+            background: rgba(15, 23, 42, 0.95);
         }
 
-        .tracking-widest-plus { lg:tracking-[0.3em]; tracking-widest; }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #020617; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #3b82f6; }
     </style>
 </head>
-<body>
-    <div id="app" v-cloak class="h-screen flex flex-col">
-        <!-- Persistent Agent Status Strip -->
+<body class="h-screen overflow-hidden">
+    <div id="app" v-cloak class="h-full flex flex-col">
+        
+        <!-- 1. AGENT STATUS STRIP (Persistent) -->
         <div v-if="user" class="status-strip px-6 py-3 flex items-center justify-between z-50">
-            <div class="flex items-center gap-6">
+            <div class="flex items-center gap-8">
                 <div class="flex flex-col">
-                    <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest">System Status</span>
-                    <div class="flex items-center gap-2">
-                        <span class="w-2 h-2 rounded-full" :class="statusColor"></span>
-                        <span class="font-bold uppercase text-sm tracking-widest">{{ currentStatus }}</span>
-                    </div>
+                    <span class="text-[10px] font-bold text-blue-400 uppercase tracking-[0.2em]">Agent Identity</span>
+                    <span class="text-sm font-semibold">{{ user.email }} <span class="text-slate-500 text-xs ml-2">({{ role }})</span></span>
                 </div>
+                
                 <div class="h-8 w-px bg-slate-700"></div>
+
                 <div class="flex flex-col">
-                    <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Duration</span>
-                    <span class="font-mono text-lg leading-none">{{ statusDuration }}</span>
+                    <span class="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">State / Session Duration</span>
+                    <div class="flex items-center gap-3">
+                        <span class="text-sm font-bold uppercase tracking-widest" :class="statusColorClass">{{ currentStatus }}</span>
+                        <span class="font-mono text-blue-400 text-lg">{{ statusTimer }}</span>
+                    </div>
                 </div>
             </div>
 
             <div class="flex items-center gap-2">
-                <button v-for="type in breakTypes" :key="type" 
-                    @click="setBreak(type)"
-                    :class="currentStatus === type ? 'bg-blue-600 border-blue-400' : 'bg-slate-800 border-slate-700'"
-                    class="px-3 py-1.5 rounded-lg border text-[10px] font-bold uppercase tracking-tighter hover:border-blue-500 transition-all">
-                    {{ type }}
+                <button v-for="st in availableStatuses" :key="st" 
+                    @click="changeStatus(st)"
+                    :class="currentStatus === st ? 'bg-blue-600 border-blue-400' : 'bg-slate-800 border-slate-700'"
+                    class="px-3 py-1.5 rounded text-[10px] font-black uppercase tracking-tighter hover:border-blue-400 transition-all">
+                    {{ st }}
                 </button>
             </div>
 
-            <div class="flex items-center gap-4">
-                <div class="relative cursor-pointer" @click="showNotifications = !showNotifications">
-                    <i class="fa-solid fa-bell text-xl text-slate-400"></i>
-                    <span v-if="unreadCount" class="absolute -top-1 -right-1 bg-red-600 text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">{{ unreadCount }}</span>
+            <div class="flex items-center gap-6">
+                <div class="relative cursor-pointer group" @click="toggleNotifications">
+                    <i class="fa-solid fa-bell text-xl" :class="unreadCount > 0 ? 'text-blue-400 animate-pulse' : 'text-slate-500'"></i>
+                    <span v-if="unreadCount > 0" class="absolute -top-2 -right-2 bg-red-600 text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold">{{ unreadCount }}</span>
                 </div>
-                <button @click="logout" class="text-slate-500 hover:text-white transition"><i class="fa-solid fa-power-off"></i></button>
+                <button @click="logout" class="text-slate-500 hover:text-red-400 transition-colors">
+                    <i class="fa-solid fa-power-off text-xl"></i>
+                </button>
             </div>
         </div>
 
-        <!-- Main Content -->
-        <main v-if="user" class="flex-1 flex overflow-hidden">
-            <!-- Sidebar Navigation -->
-            <nav class="w-20 lg:w-64 glass-panel m-4 mr-2 flex flex-col p-4 space-y-2">
-                <div class="p-4 mb-4">
-                    <h1 class="text-blue-500 font-bold tracking-widest-plus text-xs uppercase">Mafanyolle</h1>
-                    <span class="text-white font-black text-xl tracking-tighter italic">RECOVERIES</span>
+        <div v-if="user" class="flex-1 flex overflow-hidden">
+            <!-- 2. SIDE NAVIGATION -->
+            <nav class="w-20 lg:w-64 glass-panel m-4 mr-2 rounded-3xl flex flex-col p-4">
+                <div class="flex-1 space-y-2 mt-4">
+                    <button @click="currentTab = 'dialer'" :class="tabClass('dialer')" class="w-full flex items-center gap-4 px-4 py-3 rounded-xl transition-all">
+                        <i class="fa-solid fa-headset"></i> <span class="hidden lg:block uppercase text-xs font-bold tracking-widest">Workstation</span>
+                    </button>
+                    <button @click="currentTab = 'matters'" :class="tabClass('matters')" class="w-full flex items-center gap-4 px-4 py-3 rounded-xl transition-all relative">
+                        <i class="fa-solid fa-database"></i> <span class="hidden lg:block uppercase text-xs font-bold tracking-widest">Shared Pool</span>
+                        <span class="absolute right-4 bg-blue-600 text-[10px] px-1.5 rounded-full">{{ poolCount }}</span>
+                    </button>
+                    <button @click="currentTab = 'inbox'" :class="tabClass('inbox')" class="w-full flex items-center gap-4 px-4 py-3 rounded-xl transition-all">
+                        <i class="fa-solid fa-calendar-check"></i> <span class="hidden lg:block uppercase text-xs font-bold tracking-widest">Follow-ups</span>
+                    </button>
+                    <button v-if="role === 'supervisor'" @click="currentTab = 'supervisor'" :class="tabClass('supervisor')" class="w-full flex items-center gap-4 px-4 py-3 rounded-xl transition-all text-amber-400 border border-amber-900/30">
+                        <i class="fa-solid fa-crown"></i> <span class="hidden lg:block uppercase text-xs font-bold tracking-widest">Supervisor</span>
+                    </button>
                 </div>
-                <button @click="currentTab = 'dialer'" :class="{'sidebar-active': currentTab === 'dialer'}" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:text-white transition group">
-                    <i class="fa-solid fa-headset w-6"></i> <span class="hidden lg:block uppercase text-xs font-bold tracking-widest">Dialer</span>
-                </button>
-                <button @click="currentTab = 'matters'" :class="{'sidebar-active': currentTab === 'matters'}" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:text-white transition group">
-                    <i class="fa-solid fa-folder-open w-6"></i> <span class="hidden lg:block uppercase text-xs font-bold tracking-widest">Shared Pool</span>
-                </button>
-                <button @click="currentTab = 'inbox'" :class="{'sidebar-active': currentTab === 'inbox'}" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:text-white transition group">
-                    <i class="fa-solid fa-inbox w-6"></i> <span class="hidden lg:block uppercase text-xs font-bold tracking-widest">Inbox</span>
-                </button>
-                <button v-if="role === 'supervisor'" @click="currentTab = 'supervisor'" :class="{'sidebar-active': currentTab === 'supervisor'}" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-amber-500 hover:text-amber-400 transition group border border-amber-900/30">
-                    <i class="fa-solid fa-crown w-6"></i> <span class="hidden lg:block uppercase text-xs font-bold tracking-widest">Supervisor</span>
-                </button>
+                
+                <!-- Active Matter Preview -->
+                <div v-if="activeMatter" class="bg-blue-600/10 border border-blue-500/30 rounded-2xl p-4 hidden lg:block">
+                    <p class="text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-1">Active Account</p>
+                    <p class="font-bold text-sm truncate uppercase">{{ activeMatter.name }}</p>
+                    <p class="text-xs font-mono text-slate-400">{{ activeMatter.ref_number }}</p>
+                </div>
             </nav>
 
-            <!-- Workspace Area -->
+            <!-- 3. WORKSPACE -->
             <div class="flex-1 overflow-y-auto p-4 pl-2">
-                <!-- Dialer View -->
-                <div v-if="currentTab === 'dialer'" class="h-full flex items-center justify-center">
-                    <div class="glass-panel p-10 w-full max-w-sm flex flex-col items-center">
-                        <!-- LCD Display -->
-                        <div class="lcd-display w-full rounded-2xl p-6 mb-8 text-center flex flex-col justify-center min-h-[100px]">
-                            <span class="text-blue-500 text-[10px] font-bold uppercase tracking-[0.3em] mb-2">{{ callStatus }}</span>
-                            <span class="text-white font-mono text-3xl tracking-tighter">{{ dialedNumber || '---' }}</span>
-                            <span v-if="onCall" class="text-emerald-400 font-mono text-lg mt-2">{{ talkTimerDisplay }}</span>
+                
+                <!-- DIALER VIEW -->
+                <div v-if="currentTab === 'dialer'" class="h-full flex items-center justify-center p-4">
+                    <div class="glass-panel p-10 rounded-[3rem] w-full max-w-sm flex flex-col items-center shadow-2xl border-t-8 border-blue-600">
+                        <!-- LCD -->
+                        <div class="lcd-display w-full rounded-3xl p-6 mb-8 text-center min-h-[120px] flex flex-col justify-center">
+                            <span class="text-blue-500 font-mono text-[10px] uppercase tracking-[0.4em] mb-2">{{ callStatus }}</span>
+                            <span class="text-white font-mono text-3xl tracking-tighter">{{ dialedNumber || 'READY' }}</span>
+                            <div v-if="onCall" class="text-emerald-400 font-mono text-xl mt-2 animate-pulse">
+                                {{ callTimer }}
+                            </div>
                         </div>
 
-                        <!-- Dial Pad Grid (Circular) -->
-                        <div class="grid grid-cols-3 gap-6 mb-10">
-                            <button v-for="key in dialPad" :key="key" @click="pressKey(key)" 
-                                class="dial-pad-btn w-16 h-16 rounded-full flex items-center justify-center text-xl font-bold">
-                                {{ key }}
+                        <!-- Circular Keypad -->
+                        <div class="grid grid-cols-3 gap-5 mb-10">
+                            <button v-for="n in dialKeys" :key="n" @click="pressKey(n)" class="dial-pad-btn w-16 h-16 rounded-full flex items-center justify-center text-xl font-bold">
+                                {{ n }}
                             </button>
                         </div>
 
-                        <!-- Main Controls -->
-                        <div class="flex items-center gap-8">
-                            <button @click="backspace" class="w-16 h-16 rounded-full flex items-center justify-center text-slate-500 hover:text-white transition">
-                                <i class="fa-solid fa-delete-left text-2xl"></i>
-                            </button>
-                            <button v-if="!onCall" @click="startCall" class="w-24 h-24 rounded-full flex items-center justify-center text-white text-3xl btn-call transition-all hover:scale-110">
+                        <!-- Call Buttons -->
+                        <div class="flex items-center gap-10">
+                            <button v-if="!onCall" @click="initiateCall" class="btn-call w-24 h-24 rounded-full flex items-center justify-center text-3xl text-white transition-transform hover:scale-110 active:scale-95">
                                 <i class="fa-solid fa-phone"></i>
                             </button>
-                            <button v-else @click="endCall" class="w-24 h-24 rounded-full flex items-center justify-center text-white text-3xl btn-end transition-all hover:scale-110 animate-pulse">
+                            <button v-else @click="hangUp" class="btn-end w-24 h-24 rounded-full flex items-center justify-center text-3xl text-white transition-transform hover:scale-110 active:scale-95">
                                 <i class="fa-solid fa-phone-slash"></i>
                             </button>
-                            <button @click="dialedNumber = ''" class="w-16 h-16 rounded-full flex items-center justify-center text-slate-500 hover:text-white transition">
-                                <i class="fa-solid fa-trash-can text-xl"></i>
-                            </button>
                         </div>
                     </div>
                 </div>
 
-                <!-- Matters View -->
-                <div v-if="currentTab === 'matters'" class="space-y-6">
-                    <header class="flex justify-between items-end mb-8">
+                <!-- POOL VIEW -->
+                <div v-if="currentTab === 'matters'" class="animate-in fade-in duration-500">
+                    <div class="flex justify-between items-end mb-8 px-4">
                         <div>
-                            <h2 class="text-2xl font-black uppercase italic tracking-tighter">Shared Portfolio</h2>
-                            <p class="text-slate-500 text-sm uppercase font-bold tracking-widest">Available matters for collection</p>
+                            <h2 class="text-3xl font-black uppercase tracking-tighter italic">Shared Portfolio</h2>
+                            <p class="text-slate-500 font-bold uppercase text-[10px] tracking-[0.2em]">Select an unassigned matter to begin</p>
                         </div>
-                    </header>
+                        <div class="flex gap-2">
+                            <span class="bg-blue-600/20 text-blue-400 px-3 py-1 rounded text-xs font-bold">Total: {{ poolMatters.length }}</span>
+                        </div>
+                    </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <div v-for="matter in poolMatters" :key="matter.id" class="glass-panel p-6 hover:border-blue-500 transition group">
-                            <div class="flex justify-between items-start mb-4">
-                                <span class="text-blue-400 font-mono text-xs uppercase tracking-tighter">{{ matter.ref_number }}</span>
-                                <span class="text-[10px] font-black bg-slate-800 px-2 py-1 rounded text-slate-400 uppercase tracking-widest">Unassigned</span>
+                        <div v-for="m in poolMatters" :key="m.id" class="glass-panel p-6 rounded-3xl border hover:border-blue-500 transition-all group">
+                            <div class="flex justify-between mb-4">
+                                <span class="text-blue-500 font-mono text-xs">{{ m.ref_number }}</span>
+                                <span class="text-[9px] font-black bg-slate-800 px-2 py-0.5 rounded uppercase tracking-widest text-slate-400">Pool</span>
                             </div>
-                            <h3 class="text-xl font-bold uppercase mb-1">{{ matter.name }}</h3>
-                            <p class="text-slate-400 text-sm mb-6">Liability: <span class="text-white font-bold">R {{ matter.total_debt }}</span></p>
-                            <button @click="pullMatter(matter)" class="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-xl font-bold uppercase text-xs tracking-widest shadow-lg shadow-blue-900/20 transition-all">
-                                Pull into Workstation
+                            <h3 class="text-xl font-bold uppercase mb-1">{{ m.name }}</h3>
+                            <div class="text-slate-400 text-sm mb-6 flex justify-between items-baseline">
+                                <span>Total Debt:</span>
+                                <span class="text-white font-mono font-bold text-lg">R {{ m.total_debt }}</span>
+                            </div>
+                            <button @click="pullMatter(m)" class="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-xl font-bold uppercase text-[10px] tracking-widest shadow-lg shadow-blue-900/40 transition-all">
+                                Pull Account
                             </button>
                         </div>
                     </div>
                 </div>
 
-                <!-- Inbox/Followups View -->
-                <div v-if="currentTab === 'inbox'" class="space-y-6">
-                    <h2 class="text-2xl font-black uppercase italic tracking-tighter">My Follow-Ups</h2>
-                    <div class="glass-panel overflow-hidden">
+                <!-- INBOX VIEW -->
+                <div v-if="currentTab === 'inbox'" class="p-4">
+                    <h2 class="text-3xl font-black uppercase tracking-tighter italic mb-8">Follow-ups Inbox</h2>
+                    <div class="glass-panel rounded-3xl overflow-hidden border border-slate-800">
                         <table class="w-full text-left">
-                            <thead class="bg-slate-900/50 border-b border-slate-800">
-                                <tr class="text-[10px] uppercase tracking-widest text-slate-500">
+                            <thead class="bg-slate-900/50">
+                                <tr class="text-[10px] uppercase tracking-widest text-slate-500 border-b border-slate-800">
                                     <th class="px-6 py-4">Matter</th>
-                                    <th class="px-6 py-4">Due At</th>
-                                    <th class="px-6 py-4">Status</th>
-                                    <th class="px-6 py-4 text-right">Actions</th>
+                                    <th class="px-6 py-4">Ref</th>
+                                    <th class="px-6 py-4">Due Date</th>
+                                    <th class="px-6 py-4">Note</th>
+                                    <th class="px-6 py-4 text-right">Action</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-800">
-                                <tr v-for="f in followUps" :key="f.id" class="hover:bg-white/5">
-                                    <td class="px-6 py-4">
-                                        <div class="font-bold uppercase text-sm">{{ f.matters.name }}</div>
-                                        <div class="text-[10px] text-slate-500 font-mono">{{ f.matters.ref_number }}</div>
-                                    </td>
-                                    <td class="px-6 py-4">
-                                        <span :class="{'text-red-500 font-bold': isOverdue(f.due_at)}">{{ formatDate(f.due_at) }}</span>
-                                    </td>
-                                    <td class="px-6 py-4">
-                                        <span class="px-2 py-1 rounded-full text-[10px] font-black uppercase tracking-widest"
-                                            :class="f.status === 'pending' ? 'bg-amber-900/30 text-amber-500' : 'bg-emerald-900/30 text-emerald-500'">
-                                            {{ f.status }}
-                                        </span>
-                                    </td>
+                                <tr v-for="f in followUps" :key="f.id" class="hover:bg-white/5 transition-colors">
+                                    <td class="px-6 py-4 font-bold uppercase text-sm">{{ f.matters.name }}</td>
+                                    <td class="px-6 py-4 font-mono text-xs text-blue-400">{{ f.matters.ref_number }}</td>
+                                    <td class="px-6 py-4 font-bold" :class="{'text-red-500': isOverdue(f.due_at)}">{{ formatDate(f.due_at) }}</td>
+                                    <td class="px-6 py-4 text-xs text-slate-400 italic">"{{ f.note }}"</td>
                                     <td class="px-6 py-4 text-right">
-                                        <button @click="workMatterFromFollowup(f)" class="text-blue-500 hover:text-white transition uppercase font-black text-xs">Work</button>
+                                        <button @click="workMatterFromFollowup(f)" class="text-blue-500 hover:text-white font-black text-xs uppercase tracking-widest">Work</button>
                                     </td>
                                 </tr>
                             </tbody>
@@ -206,166 +219,239 @@
                     </div>
                 </div>
 
-                <!-- Supervisor View -->
-                <div v-if="currentTab === 'supervisor'" class="space-y-8">
-                    <h2 class="text-2xl font-black uppercase italic tracking-tighter">Command Floor View</h2>
+                <!-- SUPERVISOR VIEW -->
+                <div v-if="currentTab === 'supervisor'" class="space-y-8 p-4">
+                    <h2 class="text-3xl font-black uppercase tracking-tighter italic">Live Management Console</h2>
                     
+                    <!-- Live Floor View -->
                     <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
-                        <div v-for="agent in liveFloor" :key="agent.id" class="glass-panel p-6 border-t-4 shadow-xl" :class="statusBorder(agent.status)">
-                            <div class="flex justify-between items-center mb-4">
-                                <span class="text-xs font-black uppercase tracking-tighter">{{ agent.email.split('@')[0] }}</span>
-                                <span class="text-[10px] font-bold text-slate-500">{{ agent.duration }}</span>
+                        <div v-for="agent in liveFloor" :key="agent.id" class="glass-panel p-5 rounded-2xl border-l-4" :class="statusBorder(agent.status)">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="font-bold text-sm uppercase tracking-tighter">{{ agent.email.split('@')[0] }}</span>
+                                <span class="text-[10px] font-mono text-slate-500">{{ agent.duration }}</span>
                             </div>
-                            <div class="text-lg font-bold uppercase tracking-widest">{{ agent.status }}</div>
-                            <div class="mt-4 pt-4 border-t border-slate-800 flex justify-between items-center">
-                                <div class="flex flex-col">
-                                    <span class="text-[8px] uppercase text-slate-500 font-bold">Talk Time</span>
-                                    <span class="font-mono text-xs">{{ agent.total_talk }}</span>
-                                </div>
-                                <div class="flex flex-col text-right">
-                                    <span class="text-[8px] uppercase text-slate-500 font-bold">PTP Rate</span>
-                                    <span class="font-bold text-xs">{{ agent.conversion }}%</span>
-                                </div>
-                            </div>
+                            <div class="text-xs uppercase font-black tracking-widest" :class="statusText(agent.status)">{{ agent.status }}</div>
                         </div>
                     </div>
 
-                    <div class="glass-panel p-8">
-                        <h3 class="text-xs font-bold uppercase tracking-widest text-slate-500 mb-6">Bulk Matter Import</h3>
+                    <div class="glass-panel p-8 rounded-3xl">
+                        <h3 class="text-xs font-black uppercase tracking-widest text-blue-500 mb-6 italic">Inventory Intake (CSV)</h3>
                         <div class="flex items-center gap-4">
-                            <input type="file" @change="handleFileUpload" accept=".csv" class="hidden" id="csvImport">
-                            <label for="csvImport" class="bg-white text-slate-900 px-6 py-3 rounded-xl font-bold uppercase text-xs tracking-widest cursor-pointer hover:bg-slate-200 transition">
-                                Select CSV File
+                            <input type="file" @change="handleCSV" accept=".csv" class="hidden" id="csvFile">
+                            <label for="csvFile" class="bg-white text-slate-950 px-6 py-3 rounded-xl font-bold uppercase text-xs tracking-widest cursor-pointer hover:bg-blue-400 transition-colors">
+                                Select Spreadsheet
                             </label>
-                            <span v-if="fileName" class="text-slate-400 italic text-sm">{{ fileName }}</span>
-                            <button v-if="fileName" @click="uploadMatters" class="bg-emerald-600 px-6 py-3 rounded-xl font-bold uppercase text-xs tracking-widest hover:bg-emerald-500 transition">
-                                Start Import
+                            <button v-if="csvReady" @click="importCSV" class="bg-emerald-600 px-6 py-3 rounded-xl font-black uppercase text-xs tracking-widest animate-pulse">
+                                Confirm Import
                             </button>
                         </div>
                     </div>
                 </div>
             </div>
-        </main>
+        </div>
 
-        <!-- Wrap Up Modal -->
-        <div v-if="showWrapUp" class="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 z-[100]">
-            <div class="glass-panel w-full max-w-lg p-8 border-t-8 border-blue-600">
-                <h2 class="text-3xl font-black uppercase italic tracking-tighter mb-8">Call Wrap-Up</h2>
+        <!-- 4. WRAP-UP MODAL (Mandatory) -->
+        <div v-if="showWrapUp" class="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 z-[100]">
+            <div class="glass-panel w-full max-w-xl p-10 rounded-[3rem] border-t-8 border-blue-600 shadow-2xl">
+                <div class="mb-8">
+                    <h2 class="text-3xl font-black uppercase tracking-tighter italic mb-1">Call Conclusion</h2>
+                    <p class="text-slate-500 font-bold uppercase text-[10px] tracking-[0.3em]">Account: {{ activeMatter?.name }}</p>
+                </div>
+
                 <div class="space-y-6">
                     <div class="grid grid-cols-2 gap-4">
-                        <div class="flex flex-col gap-1">
-                            <label class="text-[10px] font-bold uppercase text-slate-500 tracking-widest">Outcome Code</label>
-                            <select v-model="wrapUp.outcome" class="bg-slate-900 border border-slate-700 p-3 rounded-xl text-white outline-none">
+                        <div class="flex flex-col gap-2">
+                            <label class="text-[10px] font-black uppercase text-slate-500 tracking-widest">Disposition Code</label>
+                            <select v-model="disposition" class="bg-slate-900 border border-slate-700 p-4 rounded-2xl text-xs font-bold outline-none text-white focus:border-blue-500">
                                 <option value="PTP">Promise to Pay (PTP)</option>
-                                <option value="BROKEN">Broken Arrangement</option>
-                                <option value="BUSY">Line Busy</option>
+                                <option value="Paid">Account Paid Full</option>
+                                <option value="WrongNo">Wrong Number</option>
                                 <option value="NA">No Answer</option>
-                                <option value="SETTLED">Settled Full</option>
+                                <option value="RTP">Refusal to Pay</option>
+                                <option value="Deceased">Deceased</option>
                             </select>
                         </div>
-                        <div v-if="wrapUp.outcome === 'PTP'" class="flex flex-col gap-1">
-                            <label class="text-[10px] font-bold uppercase text-slate-500 tracking-widest">PTP Due Date</label>
-                            <input type="date" v-model="wrapUp.dueDate" class="bg-slate-900 border border-slate-700 p-3 rounded-xl text-white outline-none">
+                        <div v-if="disposition === 'PTP'" class="flex flex-col gap-2 animate-in slide-in-from-right duration-300">
+                            <label class="text-[10px] font-black uppercase text-slate-500 tracking-widest">Arrangement Date</label>
+                            <input type="date" v-model="ptpDate" class="bg-slate-900 border border-slate-700 p-4 rounded-2xl text-xs font-bold text-white outline-none">
                         </div>
                     </div>
 
-                    <div v-if="wrapUp.outcome === 'PTP'" class="grid grid-cols-2 gap-4">
-                        <div class="flex flex-col gap-1">
-                            <label class="text-[10px] font-bold uppercase text-slate-500 tracking-widest">PTP Amount</label>
-                            <input type="number" v-model="wrapUp.amount" class="bg-slate-900 border border-slate-700 p-3 rounded-xl text-white outline-none" placeholder="R">
+                    <div v-if="disposition === 'PTP'" class="grid grid-cols-2 gap-4 animate-in slide-in-from-right duration-300">
+                        <div class="flex flex-col gap-2">
+                            <label class="text-[10px] font-black uppercase text-slate-500 tracking-widest">PTP Amount</label>
+                            <input type="number" v-model="ptpAmount" class="bg-slate-900 border border-slate-700 p-4 rounded-2xl text-xs font-bold text-white outline-none" placeholder="R">
                         </div>
-                        <div class="flex flex-col gap-1">
-                            <label class="text-[10px] font-bold uppercase text-slate-500 tracking-widest">Payment Method</label>
-                            <select v-model="wrapUp.method" class="bg-slate-900 border border-slate-700 p-3 rounded-xl text-white outline-none">
+                        <div class="flex flex-col gap-2">
+                            <label class="text-[10px] font-black uppercase text-slate-500 tracking-widest">Method</label>
+                            <select v-model="ptpMethod" class="bg-slate-900 border border-slate-700 p-4 rounded-2xl text-xs font-bold outline-none text-white">
                                 <option value="EFT">EFT</option>
                                 <option value="Debit Order">Debit Order</option>
-                                <option value="Card">Card</option>
                                 <option value="Cash">Cash</option>
                                 <option value="Payshap">Payshap</option>
                             </select>
                         </div>
                     </div>
 
-                    <div class="flex flex-col gap-1">
-                        <label class="text-[10px] font-bold uppercase text-slate-500 tracking-widest">Narrative Note</label>
-                        <textarea v-model="wrapUp.note" rows="4" class="bg-slate-900 border border-slate-700 p-4 rounded-xl text-white outline-none resize-none" placeholder="Enter collection notes..."></textarea>
+                    <div class="flex flex-col gap-2">
+                        <label class="text-[10px] font-black uppercase text-slate-500 tracking-widest">Collector Notes</label>
+                        <textarea v-model="wrapNote" rows="4" class="bg-slate-900 border border-slate-700 p-5 rounded-3xl text-sm italic text-white outline-none focus:border-blue-500 resize-none" placeholder="Enter narrative..."></textarea>
                     </div>
 
-                    <button @click="saveWrapUp" class="w-full bg-emerald-600 hover:bg-emerald-500 py-4 rounded-2xl font-black uppercase text-xs tracking-[0.2em] shadow-lg transition-all">
-                        Finalize Case Update
+                    <button @click="submitWrapUp" class="w-full bg-emerald-600 hover:bg-emerald-500 py-5 rounded-2xl font-black uppercase text-xs tracking-[0.4em] shadow-xl shadow-emerald-900/20 transition-all">
+                        Finalize Case Outcome
                     </button>
                 </div>
             </div>
         </div>
 
-        <!-- Auth Guard Overlay -->
-        <div v-if="!user" class="hidden"></div>
+        <!-- Notification Overlay -->
+        <div v-if="showNotifications" class="fixed top-20 right-8 w-80 glass-panel rounded-3xl shadow-2xl z-[100] p-4 border-t-4 border-blue-500">
+            <h4 class="text-xs font-black uppercase tracking-widest mb-4 border-b border-slate-700 pb-2 flex justify-between">
+                Notifications <span @click="showNotifications = false" class="cursor-pointer text-slate-500 hover:text-white">×</span>
+            </h4>
+            <div class="space-y-3 max-h-[400px] overflow-y-auto">
+                <div v-for="n in notifications" :key="n.id" class="p-3 bg-white/5 rounded-xl border border-white/5">
+                    <p class="text-[11px] leading-relaxed">{{ n.message }}</p>
+                    <span class="text-[8px] uppercase font-bold text-blue-500">{{ formatDateShort(n.created_at) }}</span>
+                </div>
+                <div v-if="!notifications.length" class="text-center py-10 text-slate-600 text-xs italic">Clear for now</div>
+            </div>
+        </div>
+
+        <!-- Auth Loader -->
+        <div v-if="!user && loading" class="fixed inset-0 flex items-center justify-center bg-slate-950 z-[200]">
+            <i class="fa-solid fa-sword text-blue-600 text-6xl animate-pulse"></i>
+        </div>
     </div>
 
     <script>
         const { createApp } = Vue;
-        const _client = supabase.createClient('YOUR_SUPABASE_URL', 'YOUR_ANON_KEY');
+        const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+        const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+        const _client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         createApp({
             data() {
                 return {
-                    user: null,
-                    role: 'agent',
-                    currentTab: 'dialer',
-                    dialedNumber: '',
-                    callStatus: 'Ready to Dial',
-                    onCall: false,
-                    showWrapUp: false,
-                    talkTimer: 0,
-                    statusTimerSeconds: 0,
-                    currentStatus: 'Available',
-                    activeMatter: null,
+                    user: null, role: 'agent', loading: false,
+                    currentTab: 'dialer', view: 'ledger',
+                    agentStatus: 'Available', statusSeconds: 0, statusInterval: null,
+                    dialedNumber: '', callStatus: 'READY', onCall: false, talkTime: 0, talkInterval: null,
+                    activeMatter: null, poolMatters: [], followUps: [], agentList: [],
+                    disposition: 'PTP', ptpAmount: 0, ptpDate: '', ptpMethod: 'EFT', wrapNote: '',
+                    showWrapUp: false, showNotifications: false, unreadCount: 0, notifications: [],
                     dialPad: ['1','2','3','4','5','6','7','8','9','*','0','#'],
-                    breakTypes: ['Available', 'Lunch', 'Tea Break', 'Bathroom', 'Team Meeting', 'System Issue'],
-                    
-                    poolMatters: [],
-                    followUps: [],
-                    liveFloor: [],
-                    unreadCount: 0,
-                    showNotifications: false,
-                    
-                    fileName: null,
-                    uploading: false,
-                    wrapUp: { outcome: 'PTP', amount: 0, dueDate: '', method: 'EFT', note: '' }
+                    availableStatuses: ['Available', 'Lunch', 'Tea Break', 'Admin', 'Comfort', 'Training'],
+                    csvReady: false, liveFloor: []
                 }
             },
             computed: {
-                statusDuration() {
-                    return this.formatSeconds(this.statusTimerSeconds);
+                statusTimer() { return this.formatSecs(this.statusSeconds); },
+                callTimer() { return this.formatSecs(this.talkTime); },
+                statusColorClass() {
+                    if (this.agentStatus === 'Available') return 'text-emerald-500';
+                    if (this.agentStatus === 'On Call') return 'text-red-500 animate-pulse';
+                    return 'text-amber-500';
                 },
-                talkTimerDisplay() {
-                    return this.formatSeconds(this.talkTimer);
-                },
-                statusColor() {
-                    return {
-                        'Available': 'bg-emerald-500 shadow-[0_0_10px_#10b981]',
-                        'On Call': 'bg-red-500 animate-pulse shadow-[0_0_10px_#ef4444]',
-                        'Wrap-Up': 'bg-blue-500 shadow-[0_0_10px_#3b82f6]'
-                    }[this.currentStatus] || 'bg-amber-500 shadow-[0_0_10px_#f59e0b]';
-                }
+                poolCount() { return this.poolMatters.length; }
             },
             methods: {
-                formatMoney(val) {
-                    return new Intl.NumberFormat('en-ZA').format(val);
-                },
-                formatSeconds(s) {
-                    return new Date(s * 1000).toISOString().substr(14, 5);
-                },
-                formatDate(d) {
-                    return new Date(d).toLocaleString();
-                },
-                isOverdue(d) {
-                    return new Date(d) < new Date();
-                },
-                statusBorder(s) {
-                    if (s === 'Available') return 'border-emerald-600';
-                    if (s === 'On Call') return 'border-red-600';
-                    return 'border-amber-600';
-                },
+                formatMoney(val) { return new Intl.NumberFormat('en-ZA').format(val || 0); },
+                formatSecs(s) { return new Date(s * 1000).toISOString().substr(14, 5); },
+                formatDate(d) { return new Date(d).toLocaleDateString(); },
+                formatDateShort(d) { return new Date(d).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}); },
+                isOverdue(d) { return new Date(d) < new Date(); },
+                tabClass(t) { return this.currentTab === t ? 'sidebar-active text-white' : 'text-slate-500 hover:text-white'; },
+                statusBorder(s) { return s === 'Available' ? 'border-emerald-600' : 'border-amber-600'; },
+                statusText(s) { return s === 'Available' ? 'text-emerald-500' : 'text-amber-500'; },
+
                 async login() {
-                    // Integrated with existing Auth or simple prompt for this module de
+                    const { data: { user } } = await _client.auth.getUser();
+                    if(user) {
+                        this.user = user;
+                        const { data } = await _client.from('profiles').select('role').eq('id', user.id).single();
+                        this.role = data?.role || 'agent';
+                        this.initialize();
+                    }
+                },
+
+                async changeStatus(newStatus) {
+                    if(this.onCall) return;
+                    await _client.from('agent_breaks').update({ ended_at: new Date() }).eq('agent_id', this.user.id).is('ended_at', null);
+                    this.agentStatus = newStatus;
+                    this.statusSeconds = 0;
+                    await _client.from('agent_breaks').insert({ agent_id: this.user.id, break_type: newStatus });
+                },
+
+                pressKey(n) { this.dialedNumber += n; },
+                backspace() { this.dialedNumber = this.dialedNumber.slice(0, -1); },
+
+                initiateCall() {
+                    if(!this.dialedNumber) return;
+                    this.onCall = true; this.callStatus = 'CONNECTED';
+                    this.talkTime = 0; this.changeStatus('On Call');
+                    this.talkInterval = setInterval(() => this.talkTime++, 1000);
+                },
+
+                hangUp() {
+                    this.onCall = false; this.callStatus = 'WRAP-UP';
+                    clearInterval(this.talkInterval);
+                    this.showWrapUp = true;
+                    this.changeStatus('Wrap-Up');
+                },
+
+                async pullMatter(m) {
+                    const { error } = await _client.from('matters').update({ 
+                        assigned_agent_id: this.user.id, status: 'assigned' 
+                    }).eq('id', m.id);
+                    if(!error) { this.activeMatter = m; this.dialedNumber = m.phone; this.currentTab = 'dialer'; }
+                },
+
+                async submitWrapUp() {
+                    const { id } = this.activeMatter;
+                    if(this.disposition === 'PTP') {
+                        await _client.from('matters').update({ status: 'ptp_active' }).eq('id', id);
+                        await _client.from('ptp_records').insert({
+                            matter_id: id, agent_id: this.user.id, amount: this.ptpAmount, 
+                            due_date: this.ptpDate, payment_method: this.ptpMethod
+                        });
+                        await _client.from('follow_ups').insert({
+                            matter_id: id, agent_id: this.user.id, due_at: this.ptpDate, note: this.wrapNote
+                        });
+                    }
+                    this.showWrapUp = false; this.activeMatter = null; this.dialedNumber = '';
+                    this.changeStatus('Available');
+                },
+
+                async initialize() {
+                    this.fetchPool();
+                    this.fetchFollowUps();
+                    this.subscribeRealtime();
+                    setInterval(() => this.statusSeconds++, 1000);
+                },
+
+                async fetchPool() {
+                    const { data } = await _client.from('matters').select('*').eq('status', 'unassigned');
+                    this.poolMatters = data || [];
+                },
+
+                async fetchFollowUps() {
+                    const { data } = await _client.from('follow_ups').select('*, matters(*)').eq('agent_id', this.user.id).eq('status', 'pending');
+                    this.followUps = data || [];
+                },
+
+                subscribeRealtime() {
+                    _client.channel('any').on('postgres_changes', { event: '*', schema: 'public', table: 'matters' }, () => this.fetchPool())
+                    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications' }, (p) => {
+                        this.notifications.unshift(p.new); this.unreadCount++; document.getElementById('beep').play();
+                    }).subscribe();
+                },
+
+                async logout() { await _client.auth.signOut(); window.location.reload(); }
+            },
+            mounted() { this.login(); }
+        }).mount('#app');
+    </script>
+</body>
+</html>
