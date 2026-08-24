@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Mafanyolle Recoveries | Absolute Suite</title>
+    <title>Mafanyolle Recoveries | Absolute Suite v16.1</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
@@ -10,12 +10,10 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;900&family=JetBrains+Mono&display=swap');
         body { font-family: 'Outfit', sans-serif; background-color: #020617; color: #f1f5f9; height: 100vh; overflow: hidden; }
-        .excalibur-bg { background: linear-gradient(rgba(2, 6, 23, 0.9), rgba(2, 6, 23, 0.9)), url('https://images.unsplash.com/photo-1554224155-169641357599?q=80&w=2000&auto=format&fit=crop'); background-size: cover; }
+        .excalibur-bg { background: linear-gradient(rgba(2, 6, 23, 0.93), rgba(2, 6, 23, 0.93)), url('https://images.unsplash.com/photo-1554224155-169641357599?q=80&w=2000&auto=format&fit=crop'); background-size: cover; background-position: center; }
         .glass { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(59, 130, 246, 0.2); }
-        .dial-pad-btn { width: 4.5rem; height: 4.5rem; border-radius: 50%; background: rgba(30, 41, 59, 0.5); border: 1px solid rgba(255, 255, 255, 0.1); transition: all 0.2s; font-weight: 900; font-size: 1.5rem; }
-        .dial-pad-btn:hover { background: #3b82f6; transform: scale(1.1); }
         .lcd-display { background: #050505; border: 2px solid #1e293b; box-shadow: inset 0 0 20px #000; color: #3b82f6; font-family: 'JetBrains Mono', monospace; }
-        .sidebar-active { background: rgba(59, 130, 246, 0.15); border-left: 4px solid #3b82f6; color: white; }
+        .sidebar-active { background: rgba(59, 130, 246, 0.2); border-left: 4px solid #3b82f6; color: white; }
         [v-cloak] { display: none; }
     </style>
 </head>
@@ -24,161 +22,161 @@
         <audio id="beep" src="https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3"></audio>
         <audio id="ringing" src="https://assets.mixkit.co/active_storage/sfx/1355/1355-preview.mp3" loop></audio>
 
-        <!-- 1. LOGIN -->
+        <!-- 1. LOGIN SCREEN -->
         <div v-if="!user" class="min-h-screen flex items-center justify-center p-4">
-            <div class="glass p-12 rounded-[3rem] w-full max-w-md shadow-2xl text-center">
+            <div class="glass p-12 rounded-[3rem] w-full max-w-md shadow-2xl text-center border-t-4 border-blue-600">
                 <i class="fa-solid fa-sword text-blue-500 text-6xl mb-6"></i>
                 <h1 class="text-3xl font-900 text-white uppercase italic tracking-tighter mb-10">Mafanyolle<br>Recoveries</h1>
                 <form @submit.prevent="login" class="space-y-4">
-                    <input v-model="auth.email" type="email" placeholder="Staff Email" class="w-full p-4 bg-slate-950 border border-slate-700 rounded-2xl outline-none focus:border-blue-500" required>
-                    <input v-model="auth.password" type="password" placeholder="Password" class="w-full p-4 bg-slate-950 border border-slate-700 rounded-2xl outline-none focus:border-blue-500" required>
-                    <button type="submit" :disabled="loading" class="w-full bg-blue-600 p-5 rounded-2xl font-black uppercase tracking-widest">{{ loading ? 'Connecting...' : 'Authorize' }}</button>
+                    <input v-model="auth.email" type="email" placeholder="Staff Email" class="w-full p-4 bg-slate-950 border border-slate-700 rounded-2xl mb-4 text-white text-center outline-none focus:border-blue-500" required>
+                    <input v-model="auth.password" type="password" placeholder="Password" class="w-full p-4 bg-slate-950 border border-slate-700 rounded-2xl mb-4 text-white text-center outline-none focus:border-blue-500" required>
+                    <button type="submit" :disabled="loading" class="w-full bg-blue-600 hover:bg-blue-500 p-5 rounded-2xl font-black uppercase tracking-widest">{{ loading ? 'Connecting...' : 'Authorize Access' }}</button>
                 </form>
             </div>
         </div>
 
-        <!-- 2. MAIN SUITE -->
+        <!-- 2. MAIN SYSTEM -->
         <div v-else class="flex-1 flex flex-col overflow-hidden">
-            <!-- Top Status Strip -->
+            <!-- Header -->
             <header class="h-16 bg-slate-950/80 border-b border-blue-900/30 flex items-center justify-between px-8 z-50">
                 <div class="flex items-center gap-10">
-                    <div class="text-blue-500 font-black italic">MAFANYOLLE RECOVERIES</div>
+                    <div class="text-blue-500 font-black italic tracking-widest uppercase text-xs">Mafanyolle Command</div>
                     <div class="flex items-center gap-4">
-                        <span class="text-[10px] font-black uppercase text-slate-500 italic">Status</span>
-                        <select v-model="agentStatus" @change="updateStatus" class="bg-slate-900 border-none text-xs font-bold uppercase outline-none" :class="agentStatus === 'Ready' ? 'text-emerald-400' : 'text-amber-400'">
-                            <option value="Ready">Ready</option>
-                            <option value="Tea Break">Tea Break</option>
-                            <option value="Lunch">Lunch</option>
-                            <option value="Admin">Admin</option>
-                            <option value="Comfort">Comfort</option>
+                        <select v-model="agentStatus" @change="updateStatus" class="bg-slate-900 border-none text-[10px] font-black uppercase outline-none" :class="agentStatus === 'Ready' ? 'text-emerald-400' : 'text-amber-400'">
+                            <option value="Ready">🟢 Ready</option>
+                            <option value="Tea Break">☕ Tea</option>
+                            <option value="Lunch">🍕 Lunch</option>
+                            <option value="Admin">📑 Admin</option>
                         </select>
-                        <span class="font-mono text-blue-400 text-lg">{{ statusTimer }}</span>
+                        <span class="font-mono text-blue-400 text-lg border-l border-white/10 pl-4">{{ statusTimer }}</span>
                     </div>
                 </div>
-                <div class="flex items-center gap-6">
-                    <button @click="logout" class="text-slate-500 hover:text-white transition"><i class="fa-solid fa-power-off"></i></button>
-                </div>
+                <button @click="logout" class="text-slate-600 hover:text-red-500 transition"><i class="fa-solid fa-power-off text-xl"></i></button>
             </header>
 
             <div class="flex-1 flex overflow-hidden">
                 <!-- Sidebar -->
                 <nav class="w-64 glass border-r border-blue-900/20 flex flex-col p-4 shrink-0">
                     <div class="flex-1 space-y-2 mt-4">
-                        <button @click="view = 'work'" :class="view === 'work' ? 'sidebar-active' : ''" class="w-full flex items-center gap-4 px-4 py-4 rounded-2xl text-slate-400 font-black uppercase text-xs tracking-widest"><i class="fa-solid fa-headset text-lg"></i> Workstation</button>
-                        <button @click="view = 'matters'" :class="view === 'matters' ? 'sidebar-active' : ''" class="w-full flex items-center gap-4 px-4 py-4 rounded-2xl text-slate-400 font-black uppercase text-xs tracking-widest"><i class="fa-solid fa-database text-lg"></i> Matter Pool</button>
-                        <button @click="view = 'chat'" :class="view === 'chat' ? 'sidebar-active' : ''" class="w-full flex items-center gap-4 px-4 py-4 rounded-2xl text-slate-400 font-black uppercase text-xs tracking-widest"><i class="fa-solid fa-comments text-lg"></i> Chat</button>
-                        <button v-if="role !== 'collector'" @click="view = 'supervisor'" :class="view === 'supervisor' ? 'sidebar-active' : ''" class="w-full flex items-center gap-4 px-4 py-4 rounded-2xl text-amber-500 font-black uppercase text-xs tracking-widest"><i class="fa-solid fa-crown text-lg"></i> Supervisor</button>
+                        <button @click="view = 'work'" :class="view === 'work' ? 'sidebar-active' : ''" class="w-full flex items-center gap-4 px-4 py-4 rounded-2xl text-slate-400 font-black uppercase text-[10px] tracking-widest"><i class="fa-solid fa-headset text-lg"></i> Workstation</button>
+                        <button @click="view = 'matters'" :class="view === 'matters' ? 'sidebar-active' : ''" class="w-full flex items-center gap-4 px-4 py-4 rounded-2xl text-slate-400 font-black uppercase text-[10px] tracking-widest"><i class="fa-solid fa-database text-lg"></i> Global Pool</button>
+                        <button @click="view = 'chat'" :class="view === 'chat' ? 'sidebar-active' : ''" class="w-full flex items-center gap-4 px-4 py-4 rounded-2xl text-slate-400 font-black uppercase text-[10px] tracking-widest"><i class="fa-solid fa-comments text-lg"></i> Private Chat</button>
+                    </div>
+                    <div class="mt-auto p-4 bg-blue-600/10 rounded-2xl text-center">
+                        <p class="text-[8px] font-black uppercase text-blue-500 mb-1">Authenticated As</p>
+                        <p class="text-[10px] font-bold truncate">{{ user.email }}</p>
+                        <p class="text-[10px] font-black uppercase text-blue-400 mt-1">{{ role }}</p>
                     </div>
                 </nav>
 
                 <!-- Workspace -->
                 <div class="flex-1 overflow-y-auto p-6 bg-slate-950/20">
                     
-                    <!-- WORKSTATION / DIALER -->
+                    <!-- WORKSTATION SEARCH (Normal Start Point) -->
                     <div v-if="view === 'work'" class="h-full flex items-center justify-center">
-                        <div v-if="!activeMatter" class="text-center opacity-30">
-                            <i class="fa-solid fa-search text-9xl mb-6"></i>
-                            <h2 class="text-2xl font-black uppercase tracking-widest">Search a matter to begin</h2>
-                            <input v-model="searchQuery" @keyup.enter="searchMatter" class="mt-8 p-4 w-64 bg-slate-900 border border-slate-700 rounded-xl text-center outline-none focus:border-blue-500" placeholder="Enter Reference No...">
-                        </div>
-                        <div v-else class="w-full max-w-sm glass p-10 rounded-[4rem] border-t-8 border-blue-600 flex flex-col items-center">
-                            <div class="lcd-display w-full rounded-3xl p-8 mb-8 text-center">
-                                <span class="text-[10px] font-black uppercase tracking-[0.4em] mb-2 block">{{ callStatus }}</span>
-                                <span class="text-4xl font-bold tracking-tighter">{{ dialedNumber || 'READY' }}</span>
-                                <div v-if="onCall" class="text-emerald-400 text-xl mt-4 animate-pulse">{{ callTimer }}</div>
-                            </div>
-                            <div class="grid grid-cols-3 gap-6 mb-10">
-                                <button v-for="k in ['1','2','3','4','5','6','7','8','9','*','0','#']" @click="dialedNumber += k" class="dial-pad-btn text-slate-300">{{ k }}</button>
-                            </div>
-                            <div class="flex gap-8">
-                                <button v-if="!onCall" @click="startCall" class="w-24 h-24 rounded-full bg-emerald-600 text-4xl shadow-xl hover:scale-110 transition-all"><i class="fa-solid fa-phone"></i></button>
-                                <button v-else @click="endCall" class="w-24 h-24 rounded-full bg-red-600 text-4xl shadow-xl animate-pulse"><i class="fa-solid fa-phone-slash"></i></button>
-                            </div>
-                            <div class="mt-8 text-center">
-                                <p class="font-black uppercase text-xs italic">{{ activeMatter.name }}</p>
-                                <p class="text-blue-500 font-mono text-sm mt-1">R {{ activeMatter.total_debt }}</p>
+                        <div v-if="!activeMatter" class="text-center animate-in fade-in duration-700">
+                            <i class="fa-solid fa-sword text-9xl text-blue-900/30 mb-8"></i>
+                            <h2 class="text-2xl font-black uppercase tracking-[0.3em] text-white/50">System Ready</h2>
+                            <p class="text-[10px] font-bold text-slate-600 uppercase tracking-widest mb-10">Awaiting Matter Reference Search</p>
+                            <div class="relative w-80 mx-auto">
+                                <i class="fa-solid fa-search absolute left-4 top-1/2 -translate-y-1/2 text-blue-500"></i>
+                                <input v-model="searchQuery" @keyup.enter="searchMatter" class="w-full p-5 pl-12 bg-slate-900 border border-slate-700 rounded-2xl outline-none focus:border-blue-500 text-white italic" placeholder="Enter Ref Number...">
                             </div>
                         </div>
-                    </div>
 
-                    <!-- POOL -->
-                    <div v-if="view === 'matters'" class="grid grid-cols-3 gap-6 p-4">
-                        <div v-for="m in pool" :key="m.id" class="glass p-8 rounded-[2.5rem] border hover:border-blue-500 transition-all">
-                            <div class="flex justify-between mb-4">
-                                <span class="text-blue-500 font-black text-xs">{{ m.ref_number }}</span>
-                                <span class="text-[10px] font-black bg-slate-800 px-2 py-1 rounded uppercase">Pool</span>
-                            </div>
-                            <h3 class="text-xl font-bold uppercase mb-6">{{ m.name }}</h3>
-                            <button @click="pullMatter(m)" class="w-full bg-white text-slate-950 py-4 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-blue-600 hover:text-white transition-all">Pull Case</button>
-                        </div>
-                    </div>
-
-                    <!-- SUPERVISOR -->
-                    <div v-if="view === 'supervisor'" class="space-y-8 p-4">
-                        <h2 class="text-3xl font-black uppercase italic italic">Floor Monitoring</h2>
-                        <div class="grid grid-cols-4 gap-4">
-                            <div v-for="agent in liveFloor" :key="agent.id" class="glass p-6 rounded-3xl border-t-4 border-blue-600">
-                                <div class="flex justify-between mb-4">
-                                    <span class="font-bold text-xs uppercase">{{ agent.email.split('@')[0] }}</span>
-                                    <i v-if="agent.is_on_call" class="fa-solid fa-headset text-red-500 animate-pulse"></i>
+                        <!-- ACCOUNT WORK PANEL -->
+                        <div v-else class="w-full max-w-5xl flex gap-6 animate-in slide-in-from-bottom duration-500 text-left">
+                            <!-- Left History -->
+                            <div class="w-1/3 glass p-8 rounded-[2rem] border border-blue-900/20 overflow-y-auto max-h-[70vh]">
+                                <h3 class="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-6 border-b border-blue-500/20 pb-2">Matter History</h3>
+                                <div class="space-y-4">
+                                    <div v-for="log in (activeMatter.work_history || []).slice().reverse()" class="bg-slate-900/50 p-4 rounded-2xl border border-slate-800">
+                                        <div class="flex justify-between text-[8px] font-black uppercase text-slate-500 mb-1"><span>{{ log.agent }}</span><span>{{ log.date.split('T')[0] }}</span></div>
+                                        <p class="text-xs italic">"{{ log.note }}"</p>
+                                    </div>
                                 </div>
-                                <div class="text-lg font-black uppercase tracking-widest text-emerald-500">{{ agent.current_status }}</div>
                             </div>
+                            <!-- Right Dialer -->
+                            <div class="flex-1 glass p-10 rounded-[3rem] border-t-8 border-blue-600 flex flex-col items-center">
+                                <h2 class="text-3xl font-black uppercase italic italic tracking-tighter mb-2">{{ activeMatter.name }}</h2>
+                                <p class="text-[10px] font-black text-blue-500 uppercase tracking-[0.4em] mb-10">Liability: R {{ formatMoney(activeMatter.total_debt) }}</p>
+                                
+                                <div class="lcd-display w-full max-w-sm rounded-3xl p-8 mb-8 text-center">
+                                    <span class="text-[10px] font-black uppercase tracking-[0.4em] mb-2 block opacity-50">{{ callStatus }}</span>
+                                    <span class="text-4xl font-bold tracking-tighter">{{ dialedNumber || 'READY' }}</span>
+                                    <div v-if="onCall" class="text-emerald-400 text-xl mt-4 animate-pulse">{{ callTimer }}</div>
+                                </div>
+                                <div class="flex gap-10">
+                                    <button v-if="!onCall" @click="startCall" class="w-24 h-24 rounded-full bg-emerald-600 text-4xl shadow-xl hover:scale-110 transition-all"><i class="fa-solid fa-phone"></i></button>
+                                    <button v-else @click="endCall" class="w-24 h-24 rounded-full bg-red-600 text-4xl shadow-xl animate-pulse"><i class="fa-solid fa-phone-slash"></i></button>
+                                </div>
+                                <button @click="activeMatter = null; dialedNumber = ''" class="mt-10 text-[9px] font-black text-slate-500 uppercase hover:text-white transition">Close Matter</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- MATTER POOL -->
+                    <div v-if="view === 'matters'" class="grid grid-cols-3 gap-6 p-4">
+                        <div v-for="m in pool" :key="m.id" class="glass p-8 rounded-[2.5rem] border hover:border-blue-500 transition-all text-left">
+                            <div class="flex justify-between mb-4">
+                                <span class="text-blue-500 font-black text-xs uppercase tracking-tighter">{{ m.ref_number }}</span>
+                                <span class="text-[9px] font-black bg-slate-800 px-2 py-1 rounded uppercase text-slate-500">Inventory</span>
+                            </div>
+                            <h3 class="text-xl font-bold uppercase mb-6 tracking-tighter">{{ m.name }}</h3>
+                            <button @click="pullMatter(m)" class="w-full bg-white text-slate-950 py-4 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-blue-600 hover:text-white transition-all">Work Case</button>
                         </div>
                     </div>
 
                     <!-- CHAT -->
-                    <div v-if="view === 'chat'" class="h-full flex overflow-hidden glass rounded-3xl border-slate-800">
+                    <div v-if="view === 'chat'" class="h-full flex glass rounded-[2rem] border-slate-800 overflow-hidden text-left">
                         <div class="w-64 border-r border-slate-800 overflow-y-auto">
-                            <div v-for="staff in staffList" @click="openChat(staff)" class="p-4 border-b border-slate-800 cursor-pointer hover:bg-white/5" :class="activeChatAgent?.id === staff.id ? 'bg-blue-600/10' : ''">
+                            <div v-for="staff in staffList" @click="activeChatAgent = staff" class="p-5 border-b border-slate-800 cursor-pointer hover:bg-white/5 transition" :class="activeChatAgent?.id === staff.id ? 'bg-blue-600/10' : ''">
                                 <p class="font-bold text-xs uppercase">{{ staff.email.split('@')[0] }}</p>
-                                <span class="text-[9px] uppercase font-black" :class="staff.current_status === 'Offline' ? 'text-slate-600' : 'text-emerald-500'">{{ staff.current_status }}</span>
+                                <span class="text-[8px] uppercase font-black" :class="staff.current_status === 'Offline' ? 'text-slate-700' : 'text-emerald-500'">{{ staff.current_status }}</span>
                             </div>
                         </div>
-                        <div class="flex-1 flex flex-col p-6">
+                        <div class="flex-1 flex flex-col p-8">
                             <div v-if="activeChatAgent" class="flex-1 flex flex-col">
-                                <div class="flex-1 overflow-y-auto space-y-4 mb-4" id="chatbox">
-                                    <div v-for="msg in filteredMessages" :class="msg.sender_id === user.id ? 'ml-auto bg-blue-600' : 'bg-slate-800'" class="max-w-[70%] p-4 rounded-2xl text-sm italic">
+                                <h4 class="text-xs font-black uppercase text-blue-500 mb-6 italic">Secure Line: {{ activeChatAgent.email }}</h4>
+                                <div class="flex-1 overflow-y-auto space-y-4 mb-6 pr-4" id="chatbox">
+                                    <div v-for="msg in filteredMessages" :class="msg.sender_id === user.id ? 'ml-auto bg-blue-600/20 border-blue-500/30' : 'bg-slate-800 border-slate-700'" class="max-w-[80%] p-4 rounded-2xl text-sm border italic">
                                         {{ msg.content }}
                                     </div>
                                 </div>
                                 <div class="flex gap-4">
-                                    <input v-model="chatInput" @keyup.enter="sendChat" class="flex-1 bg-slate-900 border border-slate-700 p-4 rounded-xl outline-none focus:border-blue-500" placeholder="Type message...">
-                                    <button @click="sendChat" class="bg-blue-600 px-6 rounded-xl"><i class="fa-solid fa-paper-plane"></i></button>
+                                    <input v-model="chatInput" @keyup.enter="sendChat" class="flex-1 bg-slate-900 border border-slate-700 p-4 rounded-2xl outline-none focus:border-blue-500 text-white" placeholder="Type secure message...">
+                                    <button @click="sendChat" class="bg-blue-600 px-8 rounded-2xl"><i class="fa-solid fa-paper-plane"></i></button>
                                 </div>
                             </div>
                         </div>
                     </div>
-
                 </div>
             </div>
         </div>
 
-        <!-- WRAP UP MODAL -->
-        <div v-if="showWrapUp" class="fixed inset-0 bg-black/95 backdrop-blur-xl flex items-center justify-center p-4 z-[100]">
-            <div class="glass w-full max-w-2xl p-12 rounded-[4rem] border-t-8 border-blue-600 shadow-2xl">
-                <h2 class="text-4xl font-black uppercase tracking-tighter italic mb-10">Call Conclusion</h2>
+        <!-- CALL CONCLUSION MODAL (Strict Conditional) -->
+        <div v-if="showWrapUp" class="fixed inset-0 bg-black/95 backdrop-blur-xl flex items-center justify-center p-4 z-[500]">
+            <div class="glass w-full max-w-2xl p-12 rounded-[4rem] border-t-8 border-blue-600 shadow-2xl text-left">
+                <div class="text-center mb-10">
+                    <h2 class="text-4xl font-black uppercase tracking-tighter italic italic mb-2 text-white">Call Conclusion</h2>
+                    <p class="text-blue-500 font-black uppercase text-[10px] tracking-[0.4em]">Finalizing: {{ activeMatter?.ref_number }}</p>
+                </div>
                 <div class="space-y-6">
                     <div class="grid grid-cols-2 gap-8">
                         <div>
-                            <label class="text-[10px] font-black uppercase text-slate-500 tracking-widest mb-2 block">Outcome</label>
-                            <select v-model="wrapUp.outcome" class="w-full bg-slate-900 border border-slate-700 p-4 rounded-2xl outline-none">
+                            <label class="text-[10px] font-black uppercase text-slate-500 tracking-widest mb-2 block">Outcome Wrap Code</label>
+                            <select v-model="wrapUp.outcome" class="w-full bg-slate-900 border border-slate-700 p-4 rounded-2xl outline-none text-sm font-bold">
                                 <option value="PTP">Promise to Pay (PTP)</option>
-                                <option value="DECEASED">Deceased - Cert Upload</option>
                                 <option value="RTP">Refusal to Pay</option>
-                                <option value="NA">No Answer</option>
+                                <option value="NA">No Answer / Left Message</option>
+                                <option value="PAID">Account Settled Full</option>
                             </select>
                         </div>
-                        <div v-if="wrapUp.outcome === 'PTP'"><label class="text-[10px] font-black uppercase text-slate-500 tracking-widest mb-2 block">Due Date</label><input type="date" v-model="wrapUp.dueDate" class="w-full bg-slate-900 border border-slate-700 p-4 rounded-2xl"></div>
+                        <div v-if="wrapUp.outcome === 'PTP'"><label class="text-[10px] font-black uppercase text-slate-500 tracking-widest mb-2 block">Due Date</label><input type="date" v-model="wrapUp.dueDate" class="w-full bg-slate-900 border border-slate-700 p-4 rounded-2xl text-white"></div>
                     </div>
-
-                    <div v-if="wrapUp.outcome === 'DECEASED'" class="p-6 bg-blue-900/10 border border-dashed border-blue-500/30 rounded-3xl">
-                        <label class="text-[10px] font-black text-blue-500 uppercase block mb-4 italic">Upload Death Certificate</label>
-                        <input type="file" @change="uploadDocument" class="text-xs">
-                    </div>
-
-                    <textarea v-model="wrapUp.note" rows="4" class="w-full bg-slate-900 border border-slate-700 p-6 rounded-3xl text-sm italic outline-none focus:border-blue-500" placeholder="Capture call details..."></textarea>
-                    <button @click="finalizeMatter" class="w-full bg-emerald-600 p-6 rounded-3xl font-black uppercase text-xs tracking-[0.4em] shadow-2xl transition-all active:scale-95">Commit Outcome to Ledger</button>
+                    <textarea v-model="wrapUp.note" rows="4" class="w-full bg-slate-900 border border-slate-700 p-6 rounded-3xl text-sm italic outline-none focus:border-blue-500 text-white" placeholder="Interaction narrative..."></textarea>
+                    <button @click="finalizeMatter" class="w-full bg-emerald-600 hover:bg-emerald-500 p-6 rounded-3xl font-black uppercase text-sm tracking-[0.4em] shadow-xl transition-all">Commit to Master Ledger</button>
+                    <button @click="showWrapUp = false" class="w-full text-[9px] font-black text-slate-600 uppercase text-center hover:text-white transition">Cancel Entry</button>
                 </div>
             </div>
         </div>
@@ -187,17 +185,19 @@
 
     <script>
         const { createApp } = Vue;
-        const SUPABASE_URL = 'YOUR_SUPABASE_URL';
-        const SUPABASE_KEY = 'YOUR_SUPABASE_ANON_KEY';
-        const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        // !!! REPLACE WITH YOUR KEYS !!!
+        const S_URL = 'https://idxtnkisgqucufafjidv.supabase.co';
+        const S_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkeHRua2lzZ3F1Y3VmYWZqaWR2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODczMjI2MTEsImV4cCI6MjEwMjg5ODYxMX0.Oi0_qsMfQUbE3V5uoi1VOSjPwks41xy65tG77v_ICyc';
+        const client = supabase.createClient(S_URL, S_KEY);
 
         createApp({
             data() {
                 return {
                     user: null, role: 'collector', loading: false, view: 'work',
-                    auth: { email: '', password: '' }, searchQuery: '', activeMatter: null,
+                    auth: { email: '', password: '' },
+                    searchQuery: '', activeMatter: null,
                     pool: [], staffList: [], messages: [], activeChatAgent: null, chatInput: '',
-                    dialedNumber: '', callStatus: 'READY', onCall: false, talkSecs: 0,
+                    dialedNumber: '', callStatus: 'SYSTEM IDLE', onCall: false, talkSecs: 0,
                     agentStatus: 'Ready', statusSecs: 0, showWrapUp: false,
                     wrapUp: { outcome: 'PTP', dueDate: '', note: '' }
                 }
@@ -205,12 +205,10 @@
             computed: {
                 statusTimer() { return new Date(this.statusSecs * 1000).toISOString().substr(11, 8); },
                 callTimer() { return new Date(this.talkSecs * 1000).toISOString().substr(14, 5); },
-                totalCollected() { return this.pool.reduce((s, m) => s + parseFloat(m.collected_amount || 0), 0); },
                 filteredMessages() {
                     if(!this.activeChatAgent) return [];
                     return this.messages.filter(m => (m.sender_id === this.user.id && m.receiver_id === this.activeChatAgent.id) || (m.sender_id === this.activeChatAgent.id && m.receiver_id === this.user.id));
-                },
-                liveFloor() { return this.staffList.filter(s => s.current_status !== 'Offline'); }
+                }
             },
             methods: {
                 formatMoney(v) { return new Intl.NumberFormat('en-ZA').format(v || 0); },
@@ -221,15 +219,19 @@
                 },
                 async initApp() {
                     const { data: prof } = await client.from('profiles').select('*').eq('id', this.user.id).single();
-                    this.role = prof.role;
+                    this.role = prof?.role || 'collector';
+                    // Reset modal safety flags
+                    this.showWrapUp = false;
+                    this.activeMatter = null;
+                    this.onCall = false;
                     this.fetchPool(); this.fetchStaff(); this.fetchMessages();
                     this.subscribeRealtime();
                     setInterval(() => { this.statusSecs++; if(this.onCall) this.talkSecs++; }, 1000);
                 },
                 async searchMatter() {
-                    const { data } = await client.from('matters').select('*').eq('ref_number', this.searchQuery).maybeSingle();
+                    const { data, error } = await client.from('matters').select('*').eq('ref_number', this.searchQuery).maybeSingle();
                     if(data) { this.activeMatter = data; this.dialedNumber = data.phone; }
-                    else alert("Matter not found.");
+                    else alert("Matter not found in registry.");
                 },
                 async pullMatter(m) {
                     await client.from('matters').update({ assigned_agent_id: this.user.id, status: 'assigned' }).eq('id', m.id);
@@ -237,37 +239,34 @@
                 },
                 async updateStatus() { await client.from('profiles').update({ current_status: this.agentStatus }).eq('id', this.user.id); },
                 startCall() { 
-                    document.getElementById('ringing').play(); this.onCall = true; this.callStatus = 'DIALING'; 
+                    document.getElementById('ringing').play(); this.onCall = true; this.callStatus = 'DIALING LINE'; 
                     setTimeout(() => { this.callStatus = 'CONNECTED'; document.getElementById('ringing').pause(); }, 3000);
                 },
-                endCall() { this.onCall = false; this.callStatus = 'DISCONNECTED'; this.showWrapUp = true; },
+                endCall() { 
+                    this.onCall = false; 
+                    this.callStatus = 'DISCONNECTED'; 
+                    document.getElementById('ringing').pause();
+                    this.showWrapUp = true; 
+                },
                 async finalizeMatter() {
-                    const log = { date: new Date(), outcome: this.wrapUp.outcome, note: this.wrapUp.note, agent: this.user.email };
+                    const log = { date: new Date(), outcome: this.wrapUp.outcome, note: this.wrapUp.note, agent: this.user.email.split('@')[0] };
                     const history = [...(this.activeMatter.work_history || []), log];
                     await client.from('matters').update({ work_history: history, last_outcome: this.wrapUp.outcome, status: this.wrapUp.outcome === 'PTP' ? 'ptp_active' : 'assigned' }).eq('id', this.activeMatter.id);
-                    this.showWrapUp = false; this.activeMatter = null; this.dialedNumber = '';
+                    this.showWrapUp = false;
+                    this.activeMatter = null;
+                    this.dialedNumber = '';
+                    this.searchQuery = '';
                 },
                 async sendChat() {
                     if(!this.chatInput) return;
                     await client.from('messages').insert({ sender_id: this.user.id, receiver_id: this.activeChatAgent.id, content: this.chatInput });
                     this.chatInput = '';
                 },
-                openChat(agent) { this.activeChatAgent = agent; },
-                async uploadDocument(e) {
-                    const file = e.target.files[0];
-                    const path = `docs/${this.activeMatter.id}/${file.name}`;
-                    const { data, error } = await client.storage.from('legal_docs').upload(path, file);
-                    if(error) return alert(error.message);
-                    const { data: { publicUrl } } = client.storage.from('legal_docs').getPublicUrl(path);
-                    const docs = [...(this.activeMatter.documents || []), { name: file.name, url: publicUrl }];
-                    await client.from('matters').update({ documents: docs }).eq('id', this.activeMatter.id);
-                    alert("Document vault updated.");
-                },
                 fetchPool() { client.from('matters').select('*').eq('status', 'unassigned').then(({data}) => this.pool = data || []); },
                 fetchStaff() { client.from('profiles').select('*').then(({data}) => this.staffList = data || []); },
                 fetchMessages() { client.from('messages').select('*').order('created_at', {ascending:true}).then(({data}) => this.messages = data || []); },
                 subscribeRealtime() {
-                    client.channel('global').on('postgres_changes', { event: '*', schema: 'public' }, () => { this.fetchPool(); this.fetchStaff(); this.fetchMessages(); }).subscribe();
+                    client.channel('any').on('postgres_changes', { event: '*', schema: 'public' }, () => { this.fetchPool(); this.fetchStaff(); this.fetchMessages(); }).subscribe();
                 },
                 async logout() { await client.auth.signOut(); window.location.reload(); }
             },
